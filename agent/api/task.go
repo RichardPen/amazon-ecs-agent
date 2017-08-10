@@ -706,6 +706,8 @@ func TaskFromACS(acsTask *ecsacs.Task, envelope *ecsacs.PayloadMessage) (*Task, 
 		})
 	}
 
+	// TODO PENG set the flag of container whether they need credentials from ecr to pull
+
 	return task, nil
 }
 
