@@ -695,19 +695,6 @@ func TaskFromACS(acsTask *ecsacs.Task, envelope *ecsacs.PayloadMessage) (*Task, 
 		task.StopSequenceNumber = *envelope.SeqNum
 	}
 
-	// Set up the task credentials from payload message
-	if envelope.RoleCredentials != nil {
-		seelog.Debugf("Received task with credentials, setting task execution credentials, task: %s", task.String())
-		task.SetTaskCredentials(credentials.IAMRoleCredentials{
-			RoleArn:         envelope.RoleCredentials.RoleArn,
-			AccessKeyID:     envelope.RoleCredentials.AccessKeyId,
-			SecretAccessKey: envelope.RoleCredentials.SecretAccessKey,
-			SessionToken:    envelope.RoleCredentials.SessionToken,
-		})
-	}
-
-	// TODO PENG set the flag of container whether they need credentials from ecr to pull
-
 	return task, nil
 }
 
@@ -857,16 +844,16 @@ func (task *Task) GetTaskENI() *ENI {
 	return task.ENI
 }
 
-// SetTaskCredentials sets the role credentials of the task
-func (task *Task) SetTaskCredentials(credentials *credential.IAMRoleCredentials) {
+// SetTaskExecutionCredentials sets the role credentials of the task
+func (task *Task) SetTaskExecutionCredentials(credential *credentials.IAMRoleCredentials) {
 	task.roleCredentialsLock.Lock()
 	defer task.roleCredentialsLock.Unlock()
 
-	task.roleCredentials = credentials
+	task.roleCredentials = credential
 }
 
-// GetTaskCredentials returns the role credential of the task
-func (task *Task) GetTaskCredentials() (credential.IAMRoleCredentials, bool) {
+// GetTaskExecutionCredentials returns the role credential of the task
+func (task *Task) GetTaskExecutionCredentials() (credentials.IAMRoleCredentials, bool) {
 	task.roleCredentialsLock.RLock()
 	defer task.roleCredentialsLock.RUnlock()
 
@@ -874,18 +861,18 @@ func (task *Task) GetTaskCredentials() (credential.IAMRoleCredentials, bool) {
 		return credentials.IAMRoleCredentials{}, false
 	}
 
-	return task.roleCredentials, true
+	return *task.roleCredentials, true
 }
 
 // TaskCredentialsNeedsUpdate check if there are container waiting for the
 // credentials to progress eg: pull
 func (task *Task) WaitForCredentials() bool {
-	if task.GetKnownStatus() > api.TaskStatusNone {
+	if task.GetKnownStatus() > TaskStatusNone {
 		return false
 	}
 
 	for _, container := range task.Containers {
-		if container.GetKnownStatus() < api.ContainerPulled && container.IsECRCredentialsEnabled() {
+		if container.GetKnownStatus() < ContainerPulled && container.IsECRCredentialsEnabled() {
 			return true
 		}
 	}
