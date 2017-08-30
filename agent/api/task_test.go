@@ -199,7 +199,7 @@ func TestDockerHostConfigRawConfig(t *testing.T) {
 			Type:   "foo",
 			Config: map[string]string{"foo": "bar"},
 		},
-		Ulimits: []docker.ULimit{{Name: "ulimit name", Soft: 10, Hard: 100}},
+		Ulimits:          []docker.ULimit{{Name: "ulimit name", Soft: 10, Hard: 100}},
 		MemorySwappiness: memorySwappinessDefault,
 	}
 
@@ -270,9 +270,9 @@ func TestDockerHostConfigRawConfigMerging(t *testing.T) {
 	assert.Nil(t, configErr)
 
 	expected := docker.HostConfig{
-		Privileged:  true,
-		SecurityOpt: []string{"foo", "bar"},
-		VolumesFrom: []string{"dockername-c2"},
+		Privileged:       true,
+		SecurityOpt:      []string{"foo", "bar"},
+		VolumesFrom:      []string{"dockername-c2"},
 		MemorySwappiness: memorySwappinessDefault,
 	}
 
@@ -995,6 +995,60 @@ func TestTaskUpdateKnownStatusChecksSteadyStateWhenSetToResourceProvisioned(t *t
 	newStatus = testTask.updateTaskKnownStatus()
 	assert.Equal(t, TaskRunning, newStatus, "Incorrect status returned: %s", newStatus.String())
 	assert.Equal(t, TaskRunning, testTask.GetKnownStatus())
+}
+
+// TestShouldWaitForExecutionCredentials tests the function ShouldWaitForExecutionCredentials
+func TestShouldWaitForExecutionCredentials(t *testing.T) {
+	testCases := []struct {
+		task   *Task
+		result bool
+		msg    string
+	}{
+		{&Task{
+			KnownStatusUnsafe: TaskStatusNone,
+			Containers: []*Container{
+				{
+					ECRCredentialsEnabled: true,
+					KnownStatusUnsafe:     ContainerStatusNone,
+				},
+			},
+		}, true, "task needs credentials to pull container"},
+		{&Task{
+			KnownStatusUnsafe: TaskStatusNone,
+			Containers: []*Container{
+				{
+					ECRCredentialsEnabled: false,
+					KnownStatusUnsafe:     ContainerStatusNone,
+				},
+			},
+		}, false, "no containe require credentials to pull, no need to wait for credentials"},
+		{&Task{
+			KnownStatusUnsafe: TaskStatusNone,
+			Containers: []*Container{
+				{
+					ECRCredentialsEnabled: true,
+					KnownStatusUnsafe:     ContainerPulled,
+				},
+			},
+		}, false, "container require credentials has been pulled, no need to wait for credentials"},
+		{&Task{
+			KnownStatusUnsafe:   TaskStatusNone,
+			DesiredStatusUnsafe: TaskStopped,
+			Containers: []*Container{
+				{
+					ECRCredentialsEnabled: true,
+					KnownStatusUnsafe:     ContainerStatusNone,
+				},
+			},
+		}, false, "task require credentials but desired to stop, no need to wait for credentials"},
+		{&Task{
+			KnownStatusUnsafe: TaskRunning,
+		}, false, "task is already running, no need to wait for credentials"},
+	}
+
+	for _, testCase := range testCases {
+		assert.Equal(t, testCase.result, testCase.task.ShouldWaitForExecutionCredentials(), testCase.msg)
+	}
 }
 
 func assertSetStructFieldsEqual(t *testing.T, expected, actual interface{}) {
