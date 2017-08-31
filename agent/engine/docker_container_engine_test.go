@@ -936,8 +936,8 @@ func TestContainerMetadataWorkaroundIssue27601(t *testing.T) {
 }
 
 func TestLoadImageHappyPath(t *testing.T) {
-	mockDocker, client, _, done := dockerClientSetup(t)
-	defer done()
+	mockDocker, client, _, ctrl, _ := dockerClientSetup(t)
+	defer ctrl.Finish()
 
 	mockDocker.EXPECT().LoadImage(gomock.Any()).Return(nil)
 
@@ -946,8 +946,8 @@ func TestLoadImageHappyPath(t *testing.T) {
 }
 
 func TestLoadImageTimeoutError(t *testing.T) {
-	mockDocker, client, _, done := dockerClientSetup(t)
-	defer done()
+	mockDocker, client, _, ctrl, _ := dockerClientSetup(t)
+	defer ctrl.Finish()
 
 	wait := sync.WaitGroup{}
 	wait.Add(1)

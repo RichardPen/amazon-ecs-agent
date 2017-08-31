@@ -1179,7 +1179,6 @@ func TestGetTaskByArn(t *testing.T) {
 	imageManager.EXPECT().AddAllImageStates(gomock.Any()).AnyTimes()
 	imageManager.EXPECT().RecordContainerReference(gomock.Any()).AnyTimes()
 	imageManager.EXPECT().GetImageStateFromImageName(gomock.Any()).AnyTimes()
-	client.EXPECT().PullImage(gomock.Any(), gomock.Any()).AnyTimes() // TODO change to MaxTimes(1)
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	err := taskEngine.Init(ctx)
@@ -1188,6 +1187,7 @@ func TestGetTaskByArn(t *testing.T) {
 	defer taskEngine.Disable()
 
 	sleepTask := testdata.LoadTask("sleep5")
+	sleepTask.SetDesiredStatus(api.TaskStopped)
 	sleepTaskArn := sleepTask.Arn
 	taskEngine.AddTask(sleepTask)
 
