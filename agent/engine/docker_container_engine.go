@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/aws/amazon-ecs-agent/agent/api"
+	"github.com/aws/amazon-ecs-agent/agent/async"
 	"github.com/aws/amazon-ecs-agent/agent/config"
 	"github.com/aws/amazon-ecs-agent/agent/ecr"
 	"github.com/aws/amazon-ecs-agent/agent/engine/dockerauth"
@@ -58,6 +59,10 @@ const (
 	removeContainerTimeout  = 5 * time.Minute
 	inspectContainerTimeout = 30 * time.Second
 	removeImageTimeout      = 3 * time.Minute
+
+	// Parameters for caching the docker auth for ecr
+	tokenCacheSize = 100
+	tokenCacheTTL  = 12 * time.Hour
 
 	// dockerPullBeginTimeout is the timeout from when a 'pull' is called to when
 	// we expect to see output on the pull progress stream. This is to work
@@ -162,6 +167,7 @@ type dockerGoClient struct {
 	version          dockerclient.DockerVersion
 	ecrClientFactory ecr.ECRFactory
 	auth             dockerauth.DockerAuthProvider
+	ecrTokenCache    async.Cache
 	config           *config.Config
 
 	_time     ttime.Time
@@ -204,6 +210,7 @@ func NewDockerGoClient(clientFactory dockerclient.Factory, cfg *config.Config) (
 		clientFactory:    clientFactory,
 		auth:             dockerauth.NewDockerAuthProvider(cfg.EngineAuthType, dockerAuthData),
 		ecrClientFactory: ecr.NewECRFactory(cfg.AcceptInsecureCert),
+		ecrTokenCache:    async.NewLRUCache(tokenCacheSize, tokenCacheTTL),
 		config:           cfg,
 	}, nil
 }
@@ -407,7 +414,7 @@ func (dg *dockerGoClient) getAuthdata(image string, authData *api.RegistryAuthen
 	if authData == nil || authData.Type != "ecr" {
 		return dg.auth.GetAuthconfig(image, nil)
 	}
-	provider := dockerauth.NewECRAuthProvider(dg.ecrClientFactory)
+	provider := dockerauth.NewECRAuthProvider(dg.ecrClientFactory, dg.ecrTokenCache)
 	authConfig, err := provider.GetAuthconfig(image, authData.ECRAuthData)
 	if err != nil {
 		return authConfig, CannotPullECRContainerError{err}
