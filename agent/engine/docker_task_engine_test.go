@@ -1515,7 +1515,7 @@ func TestCreateContainerOnAgentRestart(t *testing.T) {
 }
 
 // TestTaskUseExecutionRolePullECRImage tests the agent will use the execution role
-// credentials to pull from ecr repository
+// credentials to pull from an ECR repository
 func TestTaskUseExecutionRolePullECRImage(t *testing.T) {
 	ctrl, client, _, taskEngine, credentialsManager, imageManager := mocks(t, &defaultConfig)
 	defer ctrl.Finish()
@@ -1558,7 +1558,7 @@ func TestTaskUseExecutionRolePullECRImage(t *testing.T) {
 	taskEngine.(*DockerTaskEngine).pullContainer(testTask, container)
 }
 
-// TestTasktionRoleOnRestart tests the agent will process the task recorded in
+// TestNewTasktionRoleOnRestart tests the agent will process the task recorded in
 // the state file on restart
 func TestNewTaskTransitionOnRestart(t *testing.T) {
 	ctrl, _, _, taskEngine, _, _ := mocks(t, &defaultConfig)
@@ -1599,5 +1599,5 @@ func TestNotTranistionTaskUseExectionRole(t *testing.T) {
 
 	dockerTaskEngine.synchronizeState()
 	_, ok := dockerTaskEngine.managedTasks[testTask.Arn]
-	assert.False(t, ok, "task require credentials shouldnot be started on agent restart")
+	assert.False(t, ok, "tasks that require credentials should not be started on agent restart")
 }

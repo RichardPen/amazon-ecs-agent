@@ -577,7 +577,7 @@ func (engine *DockerTaskEngine) pullAndUpdateContainerReference(task *api.Task, 
 		return DockerContainerMetadata{Error: TaskStoppedBeforePullBeginError{task.Arn}}
 	}
 
-	// Set the credentials for pull from ecr if necessary
+	// Set the credentials for pull from ECR if necessary
 	if container.ShouldPullWithExecutionRole() {
 		executionCredentials, ok := engine.credentialsManager.GetTaskCredentials(task.GetExecutionCredentialsID())
 		if !ok {
@@ -587,7 +587,7 @@ func (engine *DockerTaskEngine) pullAndUpdateContainerReference(task *api.Task, 
 
 		iamCredentials := executionCredentials.GetIAMRoleCredentials()
 		container.SetRegistryAuthCredentials(iamCredentials)
-		// Clean up the ecr pull credentials after pulling
+		// Clean up the ECR pull credentials after pulling
 		defer container.SetRegistryAuthCredentials(credentials.IAMRoleCredentials{})
 	}
 

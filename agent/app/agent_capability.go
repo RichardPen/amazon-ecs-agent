@@ -52,6 +52,7 @@ const (
 //    com.amazonaws.ecs.capability.task-iam-role-network-host
 //    ecs.capability.task-eni
 //    ecs.capability.task-eni-block-instance-metadata
+//    ecs.capability.task-execution-role
 func (agent *ecsAgent) capabilities() []*ecs.Attribute {
 	var capabilities []*ecs.Attribute
 
