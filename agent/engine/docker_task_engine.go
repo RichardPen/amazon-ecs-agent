@@ -238,15 +238,9 @@ func (engine *DockerTaskEngine) synchronizeState() {
 
 	tasks := engine.state.AllTasks()
 	for _, task := range tasks {
-		// Update the registry credentials of container if needed
-		// The following situations should be taken care of:
-		// 1. Agent restart:
-		//     * task is not started, task needs to wait for credentials to pull
-		//     * task already in running state, no need to wait
-		// 2. ACS send new payload message update the task
 		conts, ok := engine.state.ContainerMapByArn(task.Arn)
-		if !ok && task.ShouldWaitForExecutionCredentials() {
-			seelog.Info("Skipping start task, waiting for execution role: %s", task.String())
+		if !ok {
+			engine.startTask(task)
 			continue
 		}
 		for _, cont := range conts {
@@ -280,9 +274,6 @@ func (engine *DockerTaskEngine) synchronizeState() {
 					cont.Container.SetKnownStatus(currentState)
 				}
 			}
-		}
-		if task.ShouldWaitForExecutionCredentials() {
-			continue
 		}
 
 		engine.startTask(task)
@@ -498,15 +489,6 @@ func (engine *DockerTaskEngine) AddTask(task *api.Task) error {
 			err := TaskDependencyError{task.Arn}
 			engine.emitTaskEvent(task, err.Error())
 		}
-		return nil
-	}
-
-	// Start task that is waitng for the execution role credentials
-	_, ok := engine.managedTasks[task.Arn]
-	if !ok {
-		existingTask.SetDesiredStatus(task.GetDesiredStatus())
-		seelog.Infof("Task received updated execution credentials, task: %s", task.Arn)
-		engine.startTask(existingTask)
 		return nil
 	}
 
