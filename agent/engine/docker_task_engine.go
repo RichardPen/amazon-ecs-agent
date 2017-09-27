@@ -925,9 +925,3 @@ func (engine *DockerTaskEngine) isParallelPullCompatible() bool {
 
 	return false
 }
-
-// isCredentialsResolved checks if the specified credentials is available in credentials manager
-func (engine *DockerTaskEngine) isCredentialsResolved(id string) bool {
-	_, ok := engine.credentialsManager.GetTaskCredentials(id)
-	return ok
-}
