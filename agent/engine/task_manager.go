@@ -162,6 +162,8 @@ func (mtask *managedTask) overseeTask() {
 		llog.Debug("Marking done for this sequence", "seqnum", mtask.StopSequenceNumber)
 		mtask.engine.taskStopGroup.Done(mtask.StopSequenceNumber)
 	}
+	// TODO: make this idempotent on agent restart
+	go mtask.releaseIPInIPAM()
 	mtask.cleanupTask(mtask.engine.cfg.TaskCleanupWaitDuration)
 }
 
@@ -331,6 +333,19 @@ func (mtask *managedTask) handleContainerChange(containerChange dockerContainerC
 		llog.Debug("Container change also resulted in task change")
 		// If knownStatus changed, let it be known
 		mtask.engine.emitTaskEvent(mtask.Task, "")
+	}
+}
+
+// releaseIPInIPAM releases the ip used by the task for awsvpc
+func (mtask *managedTask) releaseIPInIPAM() {
+	if mtask.ENI == nil {
+		return
+	}
+	seelog.Infof("Releasing ip in IPAM for task used eni, task: %s", mtask.Task.Arn)
+
+	err := mtask.engine.releaseIPInIPAM(mtask.Task)
+	if err != nil {
+		seelog.Warnf("Releasing the ip in IPAM failed, task: [%s], err: %v", mtask.Task.Arn, err)
 	}
 }
 

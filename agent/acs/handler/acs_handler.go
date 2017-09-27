@@ -204,6 +204,7 @@ func (acsSession *session) Start() error {
 			if shouldReconnectWithoutBackoff(acsError) {
 				// If ACS closed the connection, there's no need to backoff,
 				// reconnect immediately
+				seelog.Info("ACS Websocket connection closed for a valid reason")
 				acsSession.backoff.Reset()
 				sendEmptyMessageOnChannel(connectToACS)
 			} else {
@@ -311,6 +312,8 @@ func (acsSession *session) startACSSession(client wsclient.ClientServer, timer t
 		seelog.Errorf("Error connecting to ACS: %v", err)
 		return err
 	}
+	seelog.Info("Connected to ACS endpoint")
+
 	acsSession.resources.connectedToACS()
 
 	backoffResetTimer := time.AfterFunc(
@@ -398,11 +401,11 @@ func newSessionResources(credentialsProvider *credentials.Credentials) sessionRe
 
 // acsWsURL returns the websocket url for ACS given the endpoint
 func acsWsURL(endpoint, cluster, containerInstanceArn string, taskEngine engine.TaskEngine, acsSessionState sessionState) string {
-	acsUrl := endpoint
+	acsURL := endpoint
 	if endpoint[len(endpoint)-1] != '/' {
-		acsUrl += "/"
+		acsURL += "/"
 	}
-	acsUrl += "ws"
+	acsURL += "ws"
 	query := url.Values{}
 	query.Set("clusterArn", cluster)
 	query.Set("containerInstanceArn", containerInstanceArn)
@@ -413,7 +416,7 @@ func acsWsURL(endpoint, cluster, containerInstanceArn string, taskEngine engine.
 		query.Set("dockerVersion", "DockerVersion: "+dockerVersion)
 	}
 	query.Set(sendCredentialsURLParameterName, acsSessionState.getSendCredentialsURLParameter())
-	return acsUrl + "?" + query.Encode()
+	return acsURL + "?" + query.Encode()
 }
 
 // newDisconnectionTimer creates a new time object, with a callback to

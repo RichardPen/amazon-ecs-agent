@@ -48,10 +48,10 @@ const (
 	//   b) Add 'ContainerResourcesProvisioned' as a new 'ContainerStatus' enum
 	//   c) Add 'SteadyStateStatus' field to 'Container' struct
 	//   d) Add 'ENIAttachments' struct
-	// 7)
-	//   a) Add 'UseExecutionRole' in `api.ECRAuthData`
-	//   b) Add `executionCredentialsID` in `api.Task`
-	ECSDataVersion = 7
+	//   e) Add 'UseExecutionRole' in `api.ECRAuthData`
+	//   f) Add `executionCredentialsID` in `api.Task`
+	//   g) Deprecate 'SteadyStateDependencies' in favor of 'TransitionDependencySet'
+	ECSDataVersion = 6
 
 	// ecsDataFile specifies the filename in the ECS_DATADIR
 	ecsDataFile = "ecs_agent_data.json"
