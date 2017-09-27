@@ -869,8 +869,7 @@ func (task *Task) ShouldWaitForExecutionCredentials() bool {
 	}
 
 	for _, container := range task.Containers {
-		if container.GetKnownStatus() < ContainerPulled &&
-			container.ShouldPullWithExecutionRole() {
+		if container.ShouldWaitForExecutionCredentials() {
 			return true
 		}
 	}
