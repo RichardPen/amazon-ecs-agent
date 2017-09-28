@@ -271,36 +271,42 @@ func (payloadHandler *payloadRequestHandler) addTasks(payload *ecsacs.PayloadMes
 		// Generate an ack request for the credentials in the task, if the
 		// task is associated with an IAM role or the exectuion role
 		taskCredentialsID := task.GetCredentialsID()
-		taskExecutionCredentialsID := task.GetExecutionCredentialsID()
-
-		if taskCredentialsID != "" {
-			creds, ok := payloadHandler.credentialsManager.GetTaskCredentials(taskCredentialsID)
-			if !ok {
-				seelog.Errorf("Credentials could not be retrieved for task: %s", task.Arn)
-				allTasksOK = false
-			} else {
-				credentialsAcks = append(credentialsAcks, &ecsacs.IAMRoleCredentialsAckRequest{
-					MessageId:     payload.MessageId,
-					Expiration:    aws.String(creds.IAMRoleCredentials.Expiration),
-					CredentialsId: aws.String(creds.IAMRoleCredentials.CredentialsID),
-				})
-			}
+		ack, err := payloadHandler.ackCredentials(payload.MessageId, taskCredentialsID)
+		if err != nil {
+			allTasksOK = false
+			seelog.Errorf("ACK task role credentials failed for task: %s, err: %v", task.Arn, err)
 		}
-		if taskExecutionCredentialsID != "" {
-			creds, ok := payloadHandler.credentialsManager.GetTaskCredentials(taskExecutionCredentialsID)
-			if !ok {
-				seelog.Errorf("Execution credentials could not be retrieved for task: %s", task.Arn)
-				allTasksOK = false
-			} else {
-				credentialsAcks = append(credentialsAcks, &ecsacs.IAMRoleCredentialsAckRequest{
-					MessageId:     payload.MessageId,
-					Expiration:    aws.String(creds.IAMRoleCredentials.Expiration),
-					CredentialsId: aws.String(creds.IAMRoleCredentials.CredentialsID),
-				})
-			}
+		if ack != nil {
+			credentialsAcks = append(credentialsAcks, ack)
+		}
+
+		taskExecutionCredentialsID := task.GetExecutionCredentialsID()
+		ack, err = payloadHandler.ackCredentials(payload.MessageId, taskExecutionCredentialsID)
+		if err != nil {
+			allTasksOK = false
+			seelog.Errorf("ACK task execution role credentials failed for task: %s, err: %v", task.Arn, err)
+		}
+		if ack != nil {
+			credentialsAcks = append(credentialsAcks, ack)
 		}
 	}
 	return credentialsAcks, allTasksOK
+}
+
+func (payloadHandler *payloadRequestHandler) ackCredentials(messageID *string, credentialsID string) (*ecsacs.IAMRoleCredentialsAckRequest, error) {
+	if credentialsID == "" {
+		return nil, nil
+	}
+	creds, ok := payloadHandler.credentialsManager.GetTaskCredentials(credentialsID)
+	if !ok {
+		return nil, fmt.Errorf("Execution credentials could not be retrieved")
+	} else {
+		return &ecsacs.IAMRoleCredentialsAckRequest{
+			MessageId:     messageID,
+			Expiration:    aws.String(creds.IAMRoleCredentials.Expiration),
+			CredentialsId: aws.String(creds.IAMRoleCredentials.CredentialsID),
+		}, nil
+	}
 }
 
 // skipAddTaskComparatorFunc defines the function pointer that accepts task status
