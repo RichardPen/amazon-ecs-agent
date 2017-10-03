@@ -449,8 +449,10 @@ func (mtask *managedTask) progressContainers() {
 			transitionChangeContainer <- container.Name
 		})
 
-	if !anyCanTransition && !mtask.waitForExecutionCredentialsFromACS(reasons) {
-		mtask.onContainersUnableToTransitionState()
+	if !anyCanTransition {
+		if !mtask.waitForExecutionCredentialsFromACS(reasons) {
+			mtask.onContainersUnableToTransitionState()
+		}
 		return
 	}
 

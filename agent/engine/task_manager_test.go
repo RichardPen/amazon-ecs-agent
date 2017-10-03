@@ -1084,3 +1084,57 @@ func TestCleanupTaskENIs(t *testing.T) {
 	mockState.EXPECT().RemoveENIAttachment(mac)
 	mTask.cleanupTask(taskStoppedDuration)
 }
+
+func TestTaskWaitForExecutionCredentials(t *testing.T) {
+	tcs := []struct {
+		errs   []error
+		result bool
+		msg    string
+	}{
+		{
+			errs: []error{
+				dependencygraph.ExecutionCredentialsNotResolved,
+				dependencygraph.ContainerTransitioned,
+				fmt.Errorf("other error"),
+			},
+			result: true,
+			msg:    "managed task should wait for credentials if the credentials dependency is not resolved",
+		},
+		{
+			result: false,
+			msg:    "managed task does not need to wait for credentials if there is no error",
+		},
+		{
+			errs: []error{
+				dependencygraph.ContainerTransitioned,
+				dependencygraph.TransitionDependencyNotResolved,
+				fmt.Errorf("other errors"),
+			},
+			result: false,
+			msg:    "managed task does not need to wait for credentials if there is no credentials dependency error",
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("%v", tc.errs), func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			mockTime := mock_ttime.NewMockTime(ctrl)
+			mockTimer := mock_ttime.NewMockTimer(ctrl)
+			task := &managedTask{
+				Task: &api.Task{
+					KnownStatusUnsafe:   api.TaskRunning,
+					DesiredStatusUnsafe: api.TaskRunning,
+				},
+				_time:       mockTime,
+				acsMessages: make(chan acsTransition),
+			}
+			if tc.result {
+				mockTime.EXPECT().AfterFunc(gomock.Any(), gomock.Any()).Return(mockTimer)
+				mockTimer.EXPECT().Stop()
+				go func() { task.acsMessages <- acsTransition{desiredStatus: api.TaskRunning} }()
+			}
+
+			assert.Equal(t, tc.result, task.waitForExecutionCredentialsFromACS(tc.errs), tc.msg)
+		})
+	}
+}

@@ -143,7 +143,7 @@ func (payloadHandler *payloadRequestHandler) handleMessages() {
 func (payloadHandler *payloadRequestHandler) handleSingleMessage(payload *ecsacs.PayloadMessage) error {
 	if aws.StringValue(payload.MessageId) == "" {
 		seelog.Criticalf("Recieved a payload with no message id, payload: %v", payload)
-		return fmt.Errorf("Received a payload with no message id")
+		return fmt.Errorf("received a payload with no message id")
 	}
 	seelog.Debugf("Received payload message, message id: %s", aws.StringValue(payload.MessageId))
 	credentialsAcks, allTasksHandled := payloadHandler.addPayloadTasks(payload)
@@ -152,10 +152,10 @@ func (payloadHandler *payloadRequestHandler) handleSingleMessage(payload *ecsacs
 	if err != nil {
 		seelog.Errorf("Error saving state for payload message! err: %v, messageId: %s", err, *payload.MessageId)
 		// Don't ack; maybe we can save it in the future.
-		return fmt.Errorf("Error saving state for payload message, with messageId: %s", *payload.MessageId)
+		return fmt.Errorf("error saving state for payload message, with messageId: %s", *payload.MessageId)
 	}
 	if !allTasksHandled {
-		return fmt.Errorf("All tasks not handled")
+		return fmt.Errorf("all tasks not handled")
 	}
 
 	go func() {
@@ -299,7 +299,7 @@ func (payloadHandler *payloadRequestHandler) ackCredentials(messageID *string, c
 	}
 	creds, ok := payloadHandler.credentialsManager.GetTaskCredentials(credentialsID)
 	if !ok {
-		return nil, fmt.Errorf("Execution credentials could not be retrieved")
+		return nil, fmt.Errorf("execution credentials could not be retrieved")
 	} else {
 		return &ecsacs.IAMRoleCredentialsAckRequest{
 			MessageId:     messageID,
