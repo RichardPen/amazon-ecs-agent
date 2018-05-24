@@ -44,6 +44,7 @@ import (
 	"github.com/aws/amazon-ecs-agent/agent/engine/testdata"
 	"github.com/aws/amazon-ecs-agent/agent/eventstream"
 	"github.com/aws/amazon-ecs-agent/agent/statemanager/mocks"
+	taskresourcevolume "github.com/aws/amazon-ecs-agent/agent/taskresource/volume"
 	"github.com/aws/amazon-ecs-agent/agent/utils/ttime/mocks"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/containernetworking/cni/pkg/types/current"
@@ -1798,7 +1799,7 @@ func TestContainerMetadataUpdatedOnRestart(t *testing.T) {
 				task.Volumes = []apitask.TaskVolume{
 					{
 						Name:   "empty",
-						Volume: &apitask.EmptyHostVolume{},
+						Volume: &taskresourcevolume.LocalVolume{},
 					},
 				}
 				client.EXPECT().InspectContainer(gomock.Any(), dockerContainer.DockerName, gomock.Any()).Return(&docker.Container{

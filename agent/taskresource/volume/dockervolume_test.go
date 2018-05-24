@@ -22,6 +22,7 @@ import (
 
 	"github.com/aws/amazon-ecs-agent/agent/dockerclient/dockerapi"
 	"github.com/aws/amazon-ecs-agent/agent/dockerclient/dockerapi/mocks"
+	"github.com/aws/amazon-ecs-agent/agent/taskresource"
 	docker "github.com/fsouza/go-dockerclient"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -48,7 +49,7 @@ func TestCreateSuccess(t *testing.T) {
 			Error:        nil,
 		})
 
-	volume := NewVolumeResource(name, scope, autoprovision, driver, driverOptions, nil, mockClient)
+	volume := NewVolumeResource(name, name, scope, autoprovision, driver, driverOptions, nil, mockClient)
 	err := volume.Create()
 	assert.NoError(t, err)
 	assert.Equal(t, mountPoint, volume.VolumeConfig.Mountpoint)
@@ -74,7 +75,7 @@ func TestCreateError(t *testing.T) {
 			Error:        errors.New("some error"),
 		})
 
-	volume := NewVolumeResource(name, scope, autoprovision, driver, nil, labels, mockClient)
+	volume := NewVolumeResource(name, name, scope, autoprovision, driver, nil, labels, mockClient)
 	err := volume.Create()
 	assert.NotNil(t, err)
 }
@@ -91,7 +92,7 @@ func TestCleanupSuccess(t *testing.T) {
 
 	mockClient.EXPECT().RemoveVolume(name, dockerapi.RemoveVolumeTimeout).Return(nil)
 
-	volume := NewVolumeResource(name, scope, autoprovision, driver, nil, nil, mockClient)
+	volume := NewVolumeResource(name, name, scope, autoprovision, driver, nil, nil, mockClient)
 	err := volume.Cleanup()
 	assert.NoError(t, err)
 }
@@ -108,13 +109,66 @@ func TestCleanupError(t *testing.T) {
 
 	mockClient.EXPECT().RemoveVolume(name, dockerapi.RemoveVolumeTimeout).Return(errors.New("some error"))
 
-	volume := NewVolumeResource(name, scope, autoprovision, driver, nil, nil, mockClient)
+	volume := NewVolumeResource(name, name, scope, autoprovision, driver, nil, nil, mockClient)
 	err := volume.Cleanup()
 	assert.NotNil(t, err)
 }
 
+func TestApplyTransitionForTaskScopeVolume(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	mockClient := mock_dockerapi.NewMockDockerClient(ctrl)
+
+	name := "volumeName"
+	scope := "task"
+	autoprovision := false
+	driver := "driver"
+	driverOptions := map[string]string{}
+	labels := map[string]string{}
+	mountPoint := "some/mount/point"
+
+	gomock.InOrder(
+		mockClient.EXPECT().CreateVolume(name, driver, driverOptions, labels, dockerapi.CreateVolumeTimeout).Times(1).Return(
+			dockerapi.VolumeResponse{
+				DockerVolume: &docker.Volume{Name: name, Driver: driver, Mountpoint: mountPoint, Labels: nil},
+				Error:        nil,
+			}),
+		mockClient.EXPECT().RemoveVolume(name, dockerapi.RemoveVolumeTimeout).Times(1).Return(nil),
+	)
+
+	volume := NewVolumeResource(name, name, scope, autoprovision, driver, driverOptions, labels, mockClient)
+	volume.ApplyTransition(taskresource.ResourceStatus(VolumeCreated))
+	volume.ApplyTransition(taskresource.ResourceStatus(VolumeRemoved))
+}
+
+func TestApplyTransitionForSharedScopeVolume(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	mockClient := mock_dockerapi.NewMockDockerClient(ctrl)
+
+	name := "volumeName"
+	scope := "shared"
+	autoprovision := false
+	driver := "driver"
+	mountPoint := "some/mount/point"
+
+	gomock.InOrder(
+		mockClient.EXPECT().CreateVolume(name, driver, nil, nil, dockerapi.CreateVolumeTimeout).Times(1).Return(
+			dockerapi.VolumeResponse{
+				DockerVolume: &docker.Volume{Name: name, Driver: driver, Mountpoint: mountPoint, Labels: nil},
+				Error:        nil,
+			}),
+		mockClient.EXPECT().RemoveVolume(name, dockerapi.RemoveVolumeTimeout).Times(0),
+	)
+
+	volume := NewVolumeResource(name, name, scope, autoprovision, driver, nil, nil, mockClient)
+	volume.ApplyTransition(taskresource.ResourceStatus(VolumeCreated))
+	volume.ApplyTransition(taskresource.ResourceStatus(VolumeRemoved))
+}
+
 func TestMarshall(t *testing.T) {
-	volumeStr := "{\"name\":\"volumeName\",\"dockerVolumeConfiguration\":{\"scope\":\"shared\",\"autoprovision\":true,\"mountPoint\":\"\",\"driver\":\"driver\",\"driverOpts\":{},\"labels\":{}}," +
+	volumeStr := "{\"name\":\"volumeName\",\"dockerVolumeName\":\"volumeName\"," +
+		"\"dockerVolumeConfiguration\":{\"scope\":\"shared\",\"autoprovision\":true,\"mountPoint\":\"\",\"driver\":\"driver\",\"driverOpts\":{},\"labels\":{}}," +
 		"\"createdAt\":\"0001-01-01T00:00:00Z\",\"desiredStatus\":\"CREATED\",\"knownStatus\":\"NONE\"}"
 	name := "volumeName"
 	scope := "shared"
@@ -123,9 +177,9 @@ func TestMarshall(t *testing.T) {
 	driverOpts := make(map[string]string)
 	labels := make(map[string]string)
 
-	volume := NewVolumeResource(name, scope, autoprovision, driver, driverOpts, labels, nil)
-	volume.SetDesiredStatus(VolumeCreated)
-	volume.SetKnownStatus(VolumeStatusNone)
+	volume := NewVolumeResource(name, name, scope, autoprovision, driver, driverOpts, labels, nil)
+	volume.SetDesiredStatus(taskresource.ResourceStatus(VolumeCreated))
+	volume.SetKnownStatus(taskresource.ResourceStatus(VolumeStatusNone))
 
 	bytes, err := volume.MarshalJSON()
 	assert.NoError(t, err)
@@ -142,9 +196,11 @@ func TestUnmarshall(t *testing.T) {
 	labels := map[string]string{
 		"lab1": "label",
 	}
-	bytes := []byte("{\"name\":\"volumeName\",\"dockerVolumeConfiguration\":{\"scope\":\"task\",\"autoprovision\":false,\"mountPoint\":\"mountPoint\",\"driver\":\"drive\",\"labels\":{\"lab1\":\"label\"}}," +
+	bytes := []byte("{\"name\":\"volumeName\",\"dockerVolumeName\":\"volumeName\"," +
+		"\"dockerVolumeConfiguration\":{\"scope\":\"task\",\"autoprovision\":false,\"mountPoint\":\"mountPoint\",\"driver\":\"drive\",\"labels\":{\"lab1\":\"label\"}}," +
 		"\"createdAt\":\"0001-01-01T00:00:00Z\",\"desiredStatus\":\"CREATED\",\"knownStatus\":\"NONE\"}")
 	unmarshalledVolume := &VolumeResource{}
+
 	err := unmarshalledVolume.UnmarshalJSON(bytes)
 	assert.NoError(t, err)
 
@@ -155,6 +211,6 @@ func TestUnmarshall(t *testing.T) {
 	assert.Equal(t, driver, unmarshalledVolume.VolumeConfig.Driver)
 	assert.Equal(t, labels, unmarshalledVolume.VolumeConfig.Labels)
 	assert.Equal(t, time.Time{}, unmarshalledVolume.GetCreatedAt())
-	assert.Equal(t, VolumeCreated, unmarshalledVolume.GetDesiredStatus())
-	assert.Equal(t, VolumeStatusNone, unmarshalledVolume.GetKnownStatus())
+	assert.Equal(t, taskresource.ResourceStatus(VolumeCreated), unmarshalledVolume.GetDesiredStatus())
+	assert.Equal(t, taskresource.ResourceStatus(VolumeStatusNone), unmarshalledVolume.GetKnownStatus())
 }
