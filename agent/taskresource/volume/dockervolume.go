@@ -69,6 +69,7 @@ type DockerVolumeConfig struct {
 	Driver     string            `json:"driver"`
 	DriverOpts map[string]string `json:"driverOpts"`
 	Labels     map[string]string `json:"labels"`
+	Name       string            `json:"-"`
 }
 
 // NewVolumeResource returns a docker volume wrapper object
@@ -104,6 +105,11 @@ func (vol *VolumeResource) initStatusToTransitions(scope string) {
 
 	statusToTransitions[taskresource.ResourceStatus(VolumeRemoved)] = vol.Cleanup
 	vol.statusToTransitions = statusToTransitions
+}
+
+// Source returns the name of the volume resource which is used as the source of the volume mount
+func (cfg *DockerVolumeConfig) Source() string {
+	return cfg.Name
 }
 
 // GetName returns the name of the volume resource
