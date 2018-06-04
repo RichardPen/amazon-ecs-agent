@@ -107,11 +107,9 @@ func TestCleanupError(t *testing.T) {
 	autoprovision := false
 	driver := "driver"
 
-	mockClient.EXPECT().RemoveVolume(name, dockerapi.RemoveVolumeTimeout).Return(errors.New("some error"))
-
 	volume := NewVolumeResource(name, name, scope, autoprovision, driver, nil, nil, mockClient)
 	err := volume.Cleanup()
-	assert.NotNil(t, err)
+	assert.Nil(t, err)
 }
 
 func TestApplyTransitionForTaskScopeVolume(t *testing.T) {
