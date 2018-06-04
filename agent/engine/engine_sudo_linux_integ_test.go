@@ -22,10 +22,15 @@ import (
 	apicontainer "github.com/aws/amazon-ecs-agent/agent/api/container"
 	apitask "github.com/aws/amazon-ecs-agent/agent/api/task"
 	"github.com/aws/amazon-ecs-agent/agent/config"
-	cgroup "github.com/aws/amazon-ecs-agent/agent/taskresource/cgroup/control"
 	"github.com/aws/amazon-ecs-agent/agent/taskresource"
+	cgroup "github.com/aws/amazon-ecs-agent/agent/taskresource/cgroup/control"
+	taskresourcevolume "github.com/aws/amazon-ecs-agent/agent/taskresource/volume"
 	"github.com/aws/amazon-ecs-agent/agent/utils/ioutilwrapper"
 	"github.com/stretchr/testify/assert"
+)
+
+const (
+	testVolumeImage = "127.0.0.1:51670/amazon/amazon-ecs-volumes-test:latest"
 )
 
 func TestStartStopWithCgroup(t *testing.T) {
@@ -77,4 +82,15 @@ func TestStartStopWithCgroup(t *testing.T) {
 	}
 	assert.False(t, ok, "Expected container to have been swept but was not")
 	assert.False(t, control.Exists(cgroupRoot))
+}
+
+func createTestLocalVolumeMountTask(tmpPath string) *apitask.Task {
+	testTask := createTestTask("testLocalHostVolumeMount")
+	testTask.Volumes = []apitask.TaskVolume{{Name: "test-tmp", Volume: &taskresourcevolume.LocalVolume{}}}
+	testTask.Containers[0].Image = testVolumeImage
+	testTask.Containers[0].MountPoints = []apicontainer.MountPoint{{ContainerPath: "/host/tmp", SourceVolume: "test-tmp"}}
+	testTask.ResourcesMapUnsafe = make(map[string][]taskresource.TaskResource)
+	testTask.Containers[0].TransitionDependenciesMap = make(map[apicontainer.ContainerStatus]apicontainer.TransitionDependencySet)
+	testTask.Containers[0].Command = []string{`echo -n "empty-data-volume" > /host/tmp/hello-from-container;`}
+	return testTask
 }

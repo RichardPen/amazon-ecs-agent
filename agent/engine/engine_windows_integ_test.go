@@ -61,7 +61,7 @@ func createTestContainer() *apicontainer.Container {
 
 func createTestHostVolumeMountTask(tmpPath string) *apitask.Task {
 	testTask := createTestTask("testHostVolumeMount")
-	testTask.Volumes = []apitask.TaskVolume{{Name: "test-tmp", Volume: &apitask.FSHostVolume{FSSourcePath: tmpPath}}}
+	testTask.Volumes = []apitask.TaskVolume{{Name: "test-tmp", Volume: &taskresourcevolume.FSHostVolume{FSSourcePath: tmpPath}}}
 	testTask.Containers[0].Image = testVolumeImage
 	testTask.Containers[0].MountPoints = []apicontainer.MountPoint{{ContainerPath: "C:/host/tmp", SourceVolume: "test-tmp"}}
 	testTask.Containers[0].Command = []string{
@@ -72,14 +72,12 @@ func createTestHostVolumeMountTask(tmpPath string) *apitask.Task {
 
 func createTestLocalVolumeMountTask(tmpPath string) *apitask.Task {
 	testTask := createTestTask("testLocalHostVolumeMount")
-	testTask.Volumes = []apitask.TaskVolume{{Name: "test-tmp", Volume: &taskresourcevolume.LocalVolume{HostPath: tmpPath}}}
 	testTask.Containers[0].Image = testVolumeImage
+	testTask.Containers[0].Command = []string{`echo -n "empty-data-volume | Out-File -FilePath C:\host\tmp\hello-from-container"`}
 	testTask.Containers[0].MountPoints = []apicontainer.MountPoint{{ContainerPath: "C:/host/tmp", SourceVolume: "test-tmp"}}
+	testTask.Volumes = []apitask.TaskVolume{{Name: "test-tmp", Volume: &taskresourcevolume.LocalVolume{}}}
 	testTask.ResourcesMapUnsafe = make(map[string][]taskresource.TaskResource)
 	testTask.Containers[0].TransitionDependenciesMap = make(map[apicontainer.ContainerStatus]apicontainer.TransitionDependencySet)
-	testTask.Containers[0].Command = []string{
-		`echo "hi" | Out-File -FilePath C:\host\tmp\hello-from-container -Encoding ascii ; $exists = Test-Path C:\host\tmp\test-file ; if (!$exists) { exit 2 } ;$contents = [IO.File]::ReadAllText("C:\host\tmp\test-file") ; if (!$contents -match "test-data") { $contents ; exit 4 } ; exit 42`,
-	}
 	return testTask
 }
 

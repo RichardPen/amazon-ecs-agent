@@ -23,9 +23,15 @@ $cwd = (pwd).Path
 try {
   cd "${PSScriptRoot}"
   go test -race -tags integration -timeout=20m -v ../agent/engine ../agent/stats ../agent/app
-  $testsExitCode = $LastExitCode
+  If ($LastExitCode -eq 0) {
+    go test -race -tag sudo -timeout=5m -v ../agent/engine
+    $testsExitCode = $LastExitCode
+  }else{
+    $testsExitCode = $LastExitCode
+  }
 } finally {
   cd "$cwd"
+  exit 1
 }
 
 exit $testsExitCode
