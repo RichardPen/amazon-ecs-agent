@@ -275,7 +275,7 @@ func (vol *VolumeResource) Create() error {
 func (vol *VolumeResource) Cleanup() error {
 	// Enable volume clean up if it's task scoped
 	if vol.VolumeConfig.Scope != TaskScope {
-		seelog.Debugf("Volume is shared, not removing", vol.Name)
+		seelog.Debugf("Volume is shared, not removing: %s", vol.Name)
 		return nil
 	}
 
