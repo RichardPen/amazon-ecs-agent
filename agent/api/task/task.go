@@ -213,6 +213,7 @@ func (task *Task) PostUnmarshalTask(cfg *config.Config,
 
 func (task *Task) initializeDockerLocalVolumes(dockerClient dockerapi.DockerClient) {
 	requiredLocalVolumes := []string{}
+	reInvalidChars := regexp.MustCompile("[^A-Za-z0-9-]+")
 	for _, container := range task.Containers {
 		for _, mountPoint := range container.MountPoints {
 			vol, ok := task.HostVolumeByName(mountPoint.SourceVolume)
