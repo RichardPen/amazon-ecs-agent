@@ -17,6 +17,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 	"sync"
@@ -210,6 +211,11 @@ func (task *Task) PostUnmarshalTask(cfg *config.Config,
 	if err != nil {
 		return apierrors.NewResourceInitError(task.Arn, err)
 	}
+	err = task.initializeDockerVolumes(dockerClient, ctx)
+	if err != nil {
+		return err
+	}
+
 	task.initializeCredentialsEndpoint(credentialsManager)
 	task.addNetworkResourceProvisioningDependency(cfg)
 	return nil
@@ -259,6 +265,117 @@ func (task *Task) initializeDockerLocalVolumes(dockerClient dockerapi.DockerClie
 
 func (task *Task) volumeName(name string) string {
 	return "ecs-" + task.Family + "-" + task.Version + "-" + name + "-" + utils.RandHex()
+}
+
+// initializeDockerVolumes checks the volume resource in the task to determine if the agent
+// should create the volume before creating the container
+func (task *Task) initializeDockerVolumes(dockerClient dockerapi.DockerClient, ctx context.Context) error {
+	for i, vol := range task.Volumes {
+		// No need to do this for non-docker volume, eg: host bind/empty volume
+		if vol.Type != DockerVolumeType {
+			continue
+		}
+
+		dockerVolume, ok := vol.Volume.(*taskresourcevolume.DockerVolumeConfig)
+		if !ok {
+			return errors.New("task volume: volume configuration does not match the type 'docker'")
+		}
+		// Agent needs to create task-scoped volume
+		if dockerVolume.Scope == taskresourcevolume.TaskScope {
+			err := task.addTaskScopedVolumes(dockerClient, &task.Volumes[i], ctx)
+			if err != nil {
+				return err
+			}
+		} else {
+			// Agent needs to create shared volume if that's auto provisioned
+			err := task.addSharedVolumes(dockerClient, &task.Volumes[i], ctx)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// addTaskScopedVolumes adds the task scoped volume into task resources and updates container dependency
+func (task *Task) addTaskScopedVolumes(dockerClient dockerapi.DockerClient,
+	vol *TaskVolume, ctx context.Context) error {
+
+	volumeConfig := vol.Volume.(*taskresourcevolume.DockerVolumeConfig)
+	volumeResource, err := taskresourcevolume.NewVolumeResource(
+		vol.Name,
+		task.volumeName(vol.Name),
+		volumeConfig.Scope, volumeConfig.Autoprovision,
+		volumeConfig.Driver, volumeConfig.DriverOpts,
+		volumeConfig.Labels, dockerClient, ctx)
+	if err != nil {
+		return err
+	}
+
+	vol.Volume = &volumeResource.VolumeConfig
+	task.AddResource(resourcetype.DockerVolumeKey, volumeResource)
+	task.updateContainerVolumeDependency(vol.Name)
+	return nil
+}
+
+// addSharedVolumes adds shared volume into task resources and updates container dependency
+func (task *Task) addSharedVolumes(dockerClient dockerapi.DockerClient,
+	vol *TaskVolume, ctx context.Context) error {
+
+	volumeConfig := vol.Volume.(*taskresourcevolume.DockerVolumeConfig)
+	volumeConfig.DockerVolumeName = vol.Name
+	if volumeConfig.Autoprovision {
+		volumeMetadata := dockerClient.InspectVolume(ctx, vol.Name, dockerapi.InspectVolumeTimeout)
+		if volumeMetadata.Error != nil {
+			return errors.Wrap(volumeMetadata.Error, "initialize volume: auto provisioned volume detection failed")
+		}
+		return nil
+	}
+
+	// check if the volume configuration matches the one exists on the instance
+	// TODO: modify the time duration after a context was injected into the API
+	volumeMetadata := dockerClient.InspectVolume(ctx, vol.Name, dockerapi.InspectVolumeTimeout)
+	if volumeMetadata.Error != nil {
+		seelog.Infof("initialize volume: Task [%s]: non-autoprovisioned volume not found, adding to task resource %q", task.Arn, vol.Name)
+		// this resource should be created by agent
+		volumeResource, err := taskresourcevolume.NewVolumeResource(
+			vol.Name,
+			vol.Name,
+			volumeConfig.Scope, volumeConfig.Autoprovision,
+			volumeConfig.Driver, volumeConfig.DriverOpts,
+			volumeConfig.Labels, dockerClient, ctx)
+		if err != nil {
+			return err
+		}
+
+		task.AddResource(resourcetype.DockerVolumeKey, volumeResource)
+		task.updateContainerVolumeDependency(vol.Name)
+		return nil
+	}
+	// validate all the volume metadata fields match to the configuration
+	if !reflect.DeepEqual(volumeMetadata.DockerVolume.Labels, volumeConfig.Labels) {
+		return errors.Errorf("intialize volume: non-autoprovisioned volume does not match existed volume labels: %s",
+			volumeMetadata.DockerVolume.Labels)
+	}
+	if !reflect.DeepEqual(volumeMetadata.DockerVolume.Options, volumeConfig.DriverOpts) {
+		return errors.Errorf("initialize volume: non-autoprovisioned volume does not match existed volume options: %s",
+			volumeMetadata.DockerVolume.Options)
+	}
+	return nil
+}
+
+// updateContainerDesiredStatusUnsafe adds the volume resource to container dependency
+func (task *Task) updateContainerVolumeDependency(name string) {
+	// Find all the container that depends on the volume
+	for _, container := range task.Containers {
+		for _, mountpoint := range container.MountPoints {
+			if mountpoint.SourceVolume == name {
+				container.BuildResourceDependency(name,
+					resourcestatus.ResourceCreated,
+					apicontainer.ContainerPulled)
+			}
+		}
+	}
 }
 
 // initializeCredentialsEndpoint sets the credentials endpoint for all containers in a task if needed.

@@ -39,9 +39,6 @@ const (
 type VolumeResource struct {
 	// Name is the name of the docker volume
 	Name string
-	// DockerVolumeName is internal docker name for this volume.
-	// Only the LocalVolume type will have dockerVolumeName different from the name above.
-	DockerVolumeName string
 	// VolumeConfig contains docker specific volume fields
 	VolumeConfig        DockerVolumeConfig
 	createdAtUnsafe     time.Time
@@ -72,7 +69,9 @@ type DockerVolumeConfig struct {
 	Driver     string            `json:"driver"`
 	DriverOpts map[string]string `json:"driverOpts"`
 	Labels     map[string]string `json:"labels"`
-	Name       string            `json:"-"`
+	// DockerVolumeName is internal docker name for this volume.
+	// Only the LocalVolume type will have dockerVolumeName different from the name above.
+	DockerVolumeName string
 }
 
 // NewVolumeResource returns a docker volume wrapper object
@@ -91,14 +90,14 @@ func NewVolumeResource(name string,
 	}
 
 	v := &VolumeResource{
-		Name:             name,
-		DockerVolumeName: dockerVolumeName,
+		Name: name,
 		VolumeConfig: DockerVolumeConfig{
-			Scope:         scope,
-			Autoprovision: autoprovision,
-			Driver:        driver,
-			DriverOpts:    driverOptions,
-			Labels:        labels,
+			Scope:            scope,
+			Autoprovision:    autoprovision,
+			Driver:           driver,
+			DriverOpts:       driverOptions,
+			Labels:           labels,
+			DockerVolumeName: dockerVolumeName,
 		},
 		client: client,
 		ctx:    ctx,
@@ -124,7 +123,7 @@ func (vol *VolumeResource) initStatusToTransitions() {
 
 // Source returns the name of the volume resource which is used as the source of the volume mount
 func (cfg *DockerVolumeConfig) Source() string {
-	return cfg.Name
+	return cfg.DockerVolumeName
 }
 
 // GetName returns the name of the volume resource
@@ -272,7 +271,7 @@ func (vol *VolumeResource) Create() error {
 	seelog.Debugf("Creating volume with name %s using driver %s", vol.Name, vol.VolumeConfig.Driver)
 	volumeResponse := vol.client.CreateVolume(
 		vol.ctx,
-		vol.DockerVolumeName,
+		vol.VolumeConfig.DockerVolumeName,
 		vol.VolumeConfig.Driver,
 		vol.VolumeConfig.DriverOpts,
 		vol.VolumeConfig.Labels,
@@ -296,7 +295,7 @@ func (vol *VolumeResource) Cleanup() error {
 	}
 
 	seelog.Debugf("Removing volume with name %s", vol.Name)
-	err := vol.client.RemoveVolume(vol.ctx, vol.DockerVolumeName, dockerapi.RemoveVolumeTimeout)
+	err := vol.client.RemoveVolume(vol.ctx, vol.VolumeConfig.DockerVolumeName, dockerapi.RemoveVolumeTimeout)
 
 	if err != nil {
 		return err
@@ -306,12 +305,11 @@ func (vol *VolumeResource) Cleanup() error {
 
 // volumeResourceJSON duplicates VolumeResource fields, only for marshalling and unmarshalling purposes
 type volumeResourceJSON struct {
-	Name             string             `json:"name"`
-	DockerVolumeName string             `json:"dockerVolumeName"`
-	VolumeConfig     DockerVolumeConfig `json:"dockerVolumeConfiguration"`
-	CreatedAt        time.Time          `json:"createdAt"`
-	DesiredStatus    *VolumeStatus      `json:"desiredStatus"`
-	KnownStatus      *VolumeStatus      `json:"knownStatus"`
+	Name          string             `json:"name"`
+	VolumeConfig  DockerVolumeConfig `json:"dockerVolumeConfiguration"`
+	CreatedAt     time.Time          `json:"createdAt"`
+	DesiredStatus *VolumeStatus      `json:"desiredStatus"`
+	KnownStatus   *VolumeStatus      `json:"knownStatus"`
 }
 
 // MarshalJSON marshals VolumeResource object using duplicate struct VolumeResourceJSON
@@ -321,7 +319,6 @@ func (vol *VolumeResource) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(volumeResourceJSON{
 		vol.Name,
-		vol.DockerVolumeName,
 		vol.VolumeConfig,
 		vol.GetCreatedAt(),
 		func() *VolumeStatus { desiredState := VolumeStatus(vol.GetDesiredStatus()); return &desiredState }(),
@@ -338,11 +335,6 @@ func (vol *VolumeResource) UnmarshalJSON(b []byte) error {
 	}
 
 	vol.Name = temp.Name
-	if temp.DockerVolumeName != "" {
-		vol.DockerVolumeName = temp.DockerVolumeName
-	} else {
-		vol.DockerVolumeName = temp.Name
-	}
 	vol.VolumeConfig = temp.VolumeConfig
 	if temp.DesiredStatus != nil {
 		vol.SetDesiredStatus(resourcestatus.ResourceStatus(*temp.DesiredStatus))
