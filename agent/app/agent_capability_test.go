@@ -105,6 +105,9 @@ func TestCapabilities(t *testing.T) {
 				Name: aws.String(attributePrefix + taskENIBlockInstanceMetadataAttributeSuffix),
 			},
 			{
+				Name: aws.String("ecs.capability.docker-volume-driver.local"),
+			},
+			{
 				Name: aws.String(attributePrefix + "docker-volume-driver.fancyvolumedriver"),
 			},
 			{
@@ -603,7 +606,9 @@ func TestCapabilitesListPluginsErrorCase(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, capability := range capabilities {
-		assert.False(t, strings.HasPrefix(aws.StringValue(capability.Name), "ecs.capability.docker-volume-driver"))
+		if strings.HasPrefix(aws.StringValue(capability.Name), "ecs.capability.docker-volume-driver") {
+			assert.Equal(t, aws.StringValue(capability.Name), "ecs.capability.docker-volume-driver.local")
+		}
 	}
 }
 
@@ -634,6 +639,8 @@ func TestCapabilitesScanPluginsErrorCase(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, capability := range capabilities {
-		assert.False(t, strings.HasPrefix(aws.StringValue(capability.Name), "ecs.capability.docker-volume-driver"))
+		if strings.HasPrefix(aws.StringValue(capability.Name), "ecs.capability.docker-volume-driver") {
+			assert.Equal(t, aws.StringValue(capability.Name), "ecs.capability.docker-volume-driver.local")
+		}
 	}
 }
