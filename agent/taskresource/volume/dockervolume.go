@@ -71,7 +71,7 @@ type DockerVolumeConfig struct {
 	Labels     map[string]string `json:"labels"`
 	// DockerVolumeName is internal docker name for this volume.
 	// Only the LocalVolume type will have dockerVolumeName different from the name above.
-	DockerVolumeName string
+	DockerVolumeName string `json:"dockerVolumeName"`
 }
 
 // NewVolumeResource returns a docker volume wrapper object
