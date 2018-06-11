@@ -17,7 +17,6 @@ package types
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 
 	"github.com/aws/amazon-ecs-agent/agent/taskresource"
@@ -32,12 +31,12 @@ func TestMarshalUnmarshalVolumeResource(t *testing.T) {
 
 	volumes := []taskresource.TaskResource{
 		&volume.VolumeResource{
-			Name:             "test-volume",
-			DockerVolumeName: "test-volume-docker",
+			Name: "test-volume",
 			VolumeConfig: volume.DockerVolumeConfig{
-				Scope:         "task",
-				Autoprovision: true,
-				Driver:        "local",
+				DockerVolumeName: "test-volume-docker",
+				Scope:            "task",
+				Autoprovision:    true,
+				Driver:           "local",
 			},
 		},
 	}
@@ -47,8 +46,6 @@ func TestMarshalUnmarshalVolumeResource(t *testing.T) {
 	resources["dockerVolume"] = volumes
 	data, err := json.Marshal(resources)
 	require.NoError(t, err)
-
-	fmt.Println("***** marshalled\n", string(data))
 
 	var unMarshalledResource ResourcesMap
 	err = json.Unmarshal(data, &unMarshalledResource)

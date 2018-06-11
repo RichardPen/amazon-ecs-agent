@@ -276,7 +276,7 @@ func TestTaskWithSteadyStateResourcesProvisioned(t *testing.T) {
 	sleepTask := testdata.LoadTask("sleep5")
 	sleepContainer := sleepTask.Containers[0]
 	sleepContainer.TransitionDependenciesMap = make(map[apicontainer.ContainerStatus]apicontainer.TransitionDependencySet)
-	sleepContainer.BuildContainerDependency("pause", apicontainer.ContainerRunning, apicontainer.ContainerPulled)
+	sleepContainer.BuildContainerDependency("pause", apicontainer.ContainerResourcesProvisioned, apicontainer.ContainerPulled)
 	// Add a second container with DesiredStatus == RESOURCES_PROVISIONED and
 	// steadyState == RESOURCES_PROVISIONED
 	pauseContainer := apicontainer.NewContainerWithSteadyState(apicontainer.ContainerResourcesProvisioned)

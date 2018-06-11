@@ -292,8 +292,8 @@ func (task *Task) addTaskScopedVolumes(dockerClient dockerapi.DockerClient,
 
 	volumeConfig := vol.Volume.(*taskresourcevolume.DockerVolumeConfig)
 	volumeResource := taskresourcevolume.NewVolumeResource(
-		volumeConfig.Name,
-		task.taskScopedVolumeName(volumeConfig.Name),
+		vol.Name,
+		task.taskScopedVolumeName(vol.Name),
 		volumeConfig.Scope, volumeConfig.Autoprovision,
 		volumeConfig.Driver, volumeConfig.DriverOpts,
 		volumeConfig.Labels, dockerClient)
@@ -310,7 +310,7 @@ func (task *Task) addSharedVolumes(dockerClient dockerapi.DockerClient,
 	volumeConfig := vol.Volume.(*taskresourcevolume.DockerVolumeConfig)
 	volumeConfig.DockerVolumeName = vol.Name
 	if volumeConfig.Autoprovision {
-		volumeMetadata := dockerClient.InspectVolume(volumeConfig.Name, 1*time.Minute)
+		volumeMetadata := dockerClient.InspectVolume(vol.Name, 1*time.Minute)
 		if volumeMetadata.Error != nil {
 			return errors.Wrap(volumeMetadata.Error, "initialize volume: auto provisioned volume detection failed")
 		}
@@ -319,13 +319,13 @@ func (task *Task) addSharedVolumes(dockerClient dockerapi.DockerClient,
 
 	// check if the volume configuration matches the one exists on the instance
 	// TODO: modify the time duration after a context was injected into the API
-	volumeMetadata := dockerClient.InspectVolume(volumeConfig.Name, 1*time.Minute)
+	volumeMetadata := dockerClient.InspectVolume(vol.Name, 1*time.Minute)
 	if volumeMetadata.Error != nil {
-		seelog.Infof("initialize volume: Task [%s]: non-autoprovisioned volume not found, adding to task resource %q", task.Arn, volumeConfig.Name)
+		seelog.Infof("initialize volume: Task [%s]: non-autoprovisioned volume not found, adding to task resource %q", task.Arn, vol.Name)
 		// this resource should be created by agent
 		volumeResource := taskresourcevolume.NewVolumeResource(
-			volumeConfig.Name,
-			volumeConfig.Name,
+			vol.Name,
+			vol.Name,
 			volumeConfig.Scope, volumeConfig.Autoprovision,
 			volumeConfig.Driver, volumeConfig.DriverOpts,
 			volumeConfig.Labels, dockerClient)

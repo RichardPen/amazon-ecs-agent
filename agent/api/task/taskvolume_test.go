@@ -127,7 +127,6 @@ func TestInitializeSharedProvisionedVolume(t *testing.T) {
 				Type: "docker",
 				Volume: &taskresourcevolume.DockerVolumeConfig{
 					Scope:         "shared",
-					Name:          "shared-volume-test",
 					Autoprovision: true,
 				},
 			},
@@ -165,7 +164,6 @@ func TestInitializeSharedProvisionedVolumeError(t *testing.T) {
 				Name: "shared-volume-test",
 				Type: "docker",
 				Volume: &taskresourcevolume.DockerVolumeConfig{
-					Name:          "shared-volume-test",
 					Scope:         "shared",
 					Autoprovision: true,
 				},
@@ -201,7 +199,6 @@ func TestInitializeSharedNonProvisionedVolume(t *testing.T) {
 				Name: "shared-volume-test",
 				Type: "docker",
 				Volume: &taskresourcevolume.DockerVolumeConfig{
-					Name:          "shared-volume-test",
 					Scope:         "shared",
 					Autoprovision: false,
 				},
@@ -242,7 +239,6 @@ func TestInitializeSharedNonProvisionedVolumeNotFoundError(t *testing.T) {
 				Name: "shared-volume-test",
 				Type: "docker",
 				Volume: &taskresourcevolume.DockerVolumeConfig{
-					Name:          "shared-volume-test",
 					Scope:         "shared",
 					Autoprovision: false,
 				},
@@ -276,10 +272,8 @@ func TestInitializeSharedNonProvisionedVolumeNotMatchError(t *testing.T) {
 		},
 		Volumes: []TaskVolume{
 			{
-				Name: "shared-volume-test",
 				Type: "docker",
 				Volume: &taskresourcevolume.DockerVolumeConfig{
-					Name:          "shared-volume-test",
 					Scope:         "shared",
 					Autoprovision: false,
 				},
@@ -315,7 +309,6 @@ func TestInitializeTaskVolume(t *testing.T) {
 				Name: "task-volume-test",
 				Type: "docker",
 				Volume: &taskresourcevolume.DockerVolumeConfig{
-					Name:  "task-volume-test",
 					Scope: "task",
 				},
 			},
