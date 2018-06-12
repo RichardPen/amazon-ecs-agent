@@ -213,7 +213,7 @@ func (task *Task) PostUnmarshalTask(cfg *config.Config,
 	}
 	err = task.initializeDockerVolumes(dockerClient, ctx)
 	if err != nil {
-		return err
+		return apierrors.NewResourceInitError(task.Arn, err)
 	}
 
 	task.initializeCredentialsEndpoint(credentialsManager)
@@ -365,7 +365,7 @@ func (task *Task) addSharedVolumes(ctx context.Context, dockerClient dockerapi.D
 	return nil
 }
 
-// updateContainerDesiredStatusUnsafe adds the volume resource to container dependency
+// updateContainerVolumeDependency adds the volume resource to container dependency
 func (task *Task) updateContainerVolumeDependency(name string) {
 	// Find all the container that depends on the volume
 	for _, container := range task.Containers {
