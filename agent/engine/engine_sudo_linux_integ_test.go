@@ -105,8 +105,8 @@ func TestLocalHostVolumeMount(t *testing.T) {
 	assert.NotNil(t, testTask.Containers[0].GetKnownExitCode(), "No exit code found")
 	assert.Equal(t, 0, *testTask.Containers[0].GetKnownExitCode(), "Wrong exit code")
 
-	assert.Contains(t, testTask.Volumes[0].Volume.SourcePath(), "/var/lib/docker")
-	data, err := ioutil.ReadFile(filepath.Join(testTask.Volumes[0].Volume.SourcePath(), "hello-from-container"))
+	assert.Contains(t, testTask.Volumes[0].Volume.Source(), "/var/lib/docker")
+	data, err := ioutil.ReadFile(filepath.Join(testTask.Volumes[0].Volume.Source(), "hello-from-container"))
 	assert.Nil(t, err, "Unexpected error")
 	assert.Equal(t, "empty-data-volume", strings.TrimSpace(string(data)), "Incorrect file contents")
 }

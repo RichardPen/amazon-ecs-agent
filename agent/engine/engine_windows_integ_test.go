@@ -108,6 +108,44 @@ func createTestHealthCheckTask(arn string) *apitask.Task {
 	return testTask
 }
 
+func createVolumeTask(scope, arn, volume string, provisioned bool) (*apitask.Task, string, error) {
+	testTask := createTestTask(arn)
+	testTask.Volumes = []apitask.TaskVolume{
+		{
+			Type: "docker",
+			Name: volume,
+			Volume: &taskresourcevolume.DockerVolumeConfig{
+				Scope:         scope,
+				Autoprovision: provisioned,
+				Driver:        "local",
+			},
+		},
+	}
+
+	// Construct the volume path, windows doesn't support create a volume from local directory
+	err := os.MkdirAll(filepath.Join("C:\\ProgramData\\docker\\volumes\\", volume, "_data"))
+	if err != nil {
+		return nil, "", err
+	}
+	volumePath := filepath.Join("C:\\ProgramData\\docker\\volumes\\", volume, "_data", "volumecontent")
+	err = ioutil.WriteFile(volumePath, []byte("volume"), 0666)
+	if err != nil {
+		return nil, "", err
+	}
+
+	testTask.Containers[0].Image = testVolumeImage
+	testTask.Containers[0].TransitionDependenciesMap = make(map[apicontainer.ContainerStatus]apicontainer.TransitionDependencySet)
+	testTask.Containers[0].MountPoints = []apicontainer.MountPoint{
+		{
+			SourceVolume:  volume,
+			ContainerPath: "c:\\ecs",
+		},
+	}
+	testTask.ResourcesMapUnsafe = make(map[string][]taskresource.TaskResource)
+	testTask.Containers[0].Command = []string{"$output = (cat c:\\ecs\\volumecontent); if ( $output -eq \"volume\" ) { Exit 0 } else { Exit 1 }"}
+	return testTask, volumePath, nil
+}
+
 // TODO Modify the container ip to localhost after the AMI has the required feature
 // https://github.com/docker/for-win/issues/204#issuecomment-352899657
 
@@ -145,8 +183,8 @@ func TestLocalHostVolumeMount(t *testing.T) {
 	assert.NotNil(t, testTask.Containers[0].GetKnownExitCode(), "No exit code found")
 	assert.Equal(t, 0, *testTask.Containers[0].GetKnownExitCode(), "Wrong exit code")
 
-	assert.Contains(t, testTask.Volumes[0].Volume.SourcePath(), "C:\\ProgramData\\docker\\volumes")
-	data, err := ioutil.ReadFile(filepath.Join(testTask.Volumes[0].Volume.SourcePath(), "hello-from-container"))
+	assert.Contains(t, testTask.Volumes[0].Volume.Source(), "C:\\ProgramData\\docker\\volumes")
+	data, err := ioutil.ReadFile(filepath.Join(testTask.Volumes[0].Volume.Source(), "hello-from-container"))
 	assert.Nil(t, err, "Unexpected error")
 	assert.Equal(t, "empty-data-volume", strings.TrimSpace(string(data)), "Incorrect file contents")
 }

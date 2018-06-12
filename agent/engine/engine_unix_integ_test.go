@@ -21,6 +21,7 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -33,6 +34,7 @@ import (
 	"github.com/aws/amazon-ecs-agent/agent/config"
 	"github.com/aws/amazon-ecs-agent/agent/dockerclient/dockerapi"
 	"github.com/aws/amazon-ecs-agent/agent/statechange"
+	"github.com/aws/amazon-ecs-agent/agent/taskresource"
 	taskresourcevolume "github.com/aws/amazon-ecs-agent/agent/taskresource/volume"
 	"github.com/aws/amazon-ecs-agent/agent/utils"
 	"github.com/aws/amazon-ecs-agent/agent/utils/ttime"
@@ -79,6 +81,46 @@ func createTestHealthCheckTask(arn string) *apitask.Task {
 		}`),
 	}
 	return testTask
+}
+
+func createVolumeTask(scope, arn, volume string, provisioned bool) (*apitask.Task, string, error) {
+	tmpDirectory, err := ioutil.TempDir("", "ecs_test")
+	if err != nil {
+		return nil, "", err
+	}
+	err = ioutil.WriteFile(filepath.Join(tmpDirectory, "volume-data"), []byte("volume"), 0666)
+	if err != nil {
+		return nil, "", err
+	}
+
+	testTask := createTestTask(arn)
+	testTask.Volumes = []apitask.TaskVolume{
+		{
+			Type: "docker",
+			Name: volume,
+			Volume: &taskresourcevolume.DockerVolumeConfig{
+				Scope:         scope,
+				Autoprovision: provisioned,
+				Driver:        "local",
+				DriverOpts: map[string]string{
+					"device": tmpDirectory,
+					"o":      "bind",
+				},
+			},
+		},
+	}
+
+	testTask.Containers[0].Image = testVolumeImage
+	testTask.Containers[0].TransitionDependenciesMap = make(map[apicontainer.ContainerStatus]apicontainer.TransitionDependencySet)
+	testTask.Containers[0].MountPoints = []apicontainer.MountPoint{
+		{
+			SourceVolume:  volume,
+			ContainerPath: "/ecs",
+		},
+	}
+	testTask.ResourcesMapUnsafe = make(map[string][]taskresource.TaskResource)
+	testTask.Containers[0].Command = []string{"sh", "-c", "if [[ $(cat /ecs/volume-data) != \"volume\" ]]; then cat /ecs/volume-data; exit 1; fi; exit 0"}
+	return testTask, tmpDirectory, nil
 }
 
 // TestStartStopUnpulledImage ensures that an unpulled image is successfully
