@@ -1928,7 +1928,7 @@ func TestContainerMetadataUpdatedOnRestart(t *testing.T) {
 				task.Volumes = []apitask.TaskVolume{
 					{
 						Name:   "empty",
-						Volume: &taskresourcevolume.LocalVolume{},
+						Volume: &taskresourcevolume.LocalDockerVolume{},
 					},
 				}
 				client.EXPECT().InspectContainer(gomock.Any(), dockerContainer.DockerName, gomock.Any()).Return(&docker.Container{
