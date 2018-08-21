@@ -21,6 +21,7 @@ package simpletest
 
 import (
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -43,10 +44,23 @@ func TestDataVolume(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Could not register task definition: %v", err)
 	}
-	testTasks, err := agent.StartMultipleTasks(t, td, 1)
-	if err != nil {
-		t.Fatalf("Could not start task: %v", err)
+	var testTasks []*TestTask
+	var err error
+	if strings.Contains(td, "awsvpc") {
+		for i := 0; i < 1; i++ {
+			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			if err != nil {
+				t.Fatalf("Could not start task in awsvpc mode: %!v(MISSING)", err)
+			}
+			testTasks = append(testTasks, tmpTask)
+		}
+	} else {
+		testTasks, err = agent.StartMultipleTasks(t, td, 1)
+		if err != nil {
+			t.Fatalf("Could not start task: %v", err)
+		}
 	}
+
 	timeout, err := time.ParseDuration("2m")
 	if err != nil {
 		t.Fatalf("Could not parse timeout: %#v", err)
@@ -83,10 +97,23 @@ func TestHostname(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Could not register task definition: %v", err)
 	}
-	testTasks, err := agent.StartMultipleTasks(t, td, 1)
-	if err != nil {
-		t.Fatalf("Could not start task: %v", err)
+	var testTasks []*TestTask
+	var err error
+	if strings.Contains(td, "awsvpc") {
+		for i := 0; i < 1; i++ {
+			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			if err != nil {
+				t.Fatalf("Could not start task in awsvpc mode: %!v(MISSING)", err)
+			}
+			testTasks = append(testTasks, tmpTask)
+		}
+	} else {
+		testTasks, err = agent.StartMultipleTasks(t, td, 1)
+		if err != nil {
+			t.Fatalf("Could not start task: %v", err)
+		}
 	}
+
 	timeout, err := time.ParseDuration("2m")
 	if err != nil {
 		t.Fatalf("Could not parse timeout: %#v", err)
@@ -123,10 +150,23 @@ func TestSimpleExit(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Could not register task definition: %v", err)
 	}
-	testTasks, err := agent.StartMultipleTasks(t, td, 1)
-	if err != nil {
-		t.Fatalf("Could not start task: %v", err)
+	var testTasks []*TestTask
+	var err error
+	if strings.Contains(td, "awsvpc") {
+		for i := 0; i < 1; i++ {
+			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			if err != nil {
+				t.Fatalf("Could not start task in awsvpc mode: %!v(MISSING)", err)
+			}
+			testTasks = append(testTasks, tmpTask)
+		}
+	} else {
+		testTasks, err = agent.StartMultipleTasks(t, td, 1)
+		if err != nil {
+			t.Fatalf("Could not start task: %v", err)
+		}
 	}
+
 	timeout, err := time.ParseDuration("2m")
 	if err != nil {
 		t.Fatalf("Could not parse timeout: %#v", err)
@@ -163,10 +203,23 @@ func TestTaskLocalVolume(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Could not register task definition: %v", err)
 	}
-	testTasks, err := agent.StartMultipleTasks(t, td, 1)
-	if err != nil {
-		t.Fatalf("Could not start task: %v", err)
+	var testTasks []*TestTask
+	var err error
+	if strings.Contains(td, "awsvpc") {
+		for i := 0; i < 1; i++ {
+			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			if err != nil {
+				t.Fatalf("Could not start task in awsvpc mode: %!v(MISSING)", err)
+			}
+			testTasks = append(testTasks, tmpTask)
+		}
+	} else {
+		testTasks, err = agent.StartMultipleTasks(t, td, 1)
+		if err != nil {
+			t.Fatalf("Could not start task: %v", err)
+		}
 	}
+
 	timeout, err := time.ParseDuration("2m")
 	if err != nil {
 		t.Fatalf("Could not parse timeout: %#v", err)
@@ -203,10 +256,23 @@ func TestWorkingDir(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Could not register task definition: %v", err)
 	}
-	testTasks, err := agent.StartMultipleTasks(t, td, 1)
-	if err != nil {
-		t.Fatalf("Could not start task: %v", err)
+	var testTasks []*TestTask
+	var err error
+	if strings.Contains(td, "awsvpc") {
+		for i := 0; i < 1; i++ {
+			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			if err != nil {
+				t.Fatalf("Could not start task in awsvpc mode: %!v(MISSING)", err)
+			}
+			testTasks = append(testTasks, tmpTask)
+		}
+	} else {
+		testTasks, err = agent.StartMultipleTasks(t, td, 1)
+		if err != nil {
+			t.Fatalf("Could not start task: %v", err)
+		}
 	}
+
 	timeout, err := time.ParseDuration("2m")
 	if err != nil {
 		t.Fatalf("Could not parse timeout: %#v", err)
