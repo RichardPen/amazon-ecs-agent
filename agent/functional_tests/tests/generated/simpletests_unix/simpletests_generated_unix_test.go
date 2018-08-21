@@ -21,7 +21,6 @@ package simpletest
 
 import (
 	"os"
-	"strings"
 	"testing"
 	"time"
 
@@ -36,7 +35,11 @@ func TestAddAndDropCapabilities(t *testing.T) {
 	if os.Getenv("ECS_FUNCTIONAL_PARALLEL") != "" {
 		t.Parallel()
 	}
-	agent := RunAgent(t, nil)
+	var options *AgentOptions
+	if "" == "true" {
+		options = &AgentOptions{EnableTaskENI: true}
+	}
+	agent := RunAgent(t, options)
 	defer agent.Cleanup()
 	agent.RequireVersion(">=1.0.0")
 
@@ -45,12 +48,11 @@ func TestAddAndDropCapabilities(t *testing.T) {
 		t.Fatalf("Could not register task definition: %v", err)
 	}
 	var testTasks []*TestTask
-	var err error
-	if strings.Contains(td, "awsvpc") {
+	if "" == "true" {
 		for i := 0; i < 1; i++ {
-			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			tmpTask, err := agent.StartAWSVPCTask("add-drop-capabilities", nil)
 			if err != nil {
-				t.Fatalf("Could not start task in awsvpc mode: %!v(MISSING)", err)
+				t.Fatalf("Could not start task in awsvpc mode: %v", err)
 			}
 			testTasks = append(testTasks, tmpTask)
 		}
@@ -89,7 +91,11 @@ func TestHostNameAwsvpc(t *testing.T) {
 	if os.Getenv("ECS_FUNCTIONAL_PARALLEL") != "" {
 		t.Parallel()
 	}
-	agent := RunAgent(t, nil)
+	var options *AgentOptions
+	if "true" == "true" {
+		options = &AgentOptions{EnableTaskENI: true}
+	}
+	agent := RunAgent(t, options)
 	defer agent.Cleanup()
 	agent.RequireVersion(">=1.17.3")
 
@@ -98,12 +104,11 @@ func TestHostNameAwsvpc(t *testing.T) {
 		t.Fatalf("Could not register task definition: %v", err)
 	}
 	var testTasks []*TestTask
-	var err error
-	if strings.Contains(td, "awsvpc") {
+	if "true" == "true" {
 		for i := 0; i < 1; i++ {
-			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			tmpTask, err := agent.StartAWSVPCTask("hostname-awsvpc", nil)
 			if err != nil {
-				t.Fatalf("Could not start task in awsvpc mode: %!v(MISSING)", err)
+				t.Fatalf("Could not start task in awsvpc mode: %v", err)
 			}
 			testTasks = append(testTasks, tmpTask)
 		}
@@ -142,7 +147,11 @@ func TestDataVolume(t *testing.T) {
 	if os.Getenv("ECS_FUNCTIONAL_PARALLEL") != "" {
 		t.Parallel()
 	}
-	agent := RunAgent(t, nil)
+	var options *AgentOptions
+	if "" == "true" {
+		options = &AgentOptions{EnableTaskENI: true}
+	}
+	agent := RunAgent(t, options)
 	defer agent.Cleanup()
 	agent.RequireVersion(">=1.0.0")
 
@@ -151,12 +160,11 @@ func TestDataVolume(t *testing.T) {
 		t.Fatalf("Could not register task definition: %v", err)
 	}
 	var testTasks []*TestTask
-	var err error
-	if strings.Contains(td, "awsvpc") {
+	if "" == "true" {
 		for i := 0; i < 1; i++ {
-			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			tmpTask, err := agent.StartAWSVPCTask("datavolume", nil)
 			if err != nil {
-				t.Fatalf("Could not start task in awsvpc mode: %!v(MISSING)", err)
+				t.Fatalf("Could not start task in awsvpc mode: %v", err)
 			}
 			testTasks = append(testTasks, tmpTask)
 		}
@@ -195,7 +203,11 @@ func TestDataVolume2(t *testing.T) {
 	if os.Getenv("ECS_FUNCTIONAL_PARALLEL") != "" {
 		t.Parallel()
 	}
-	agent := RunAgent(t, nil)
+	var options *AgentOptions
+	if "" == "true" {
+		options = &AgentOptions{EnableTaskENI: true}
+	}
+	agent := RunAgent(t, options)
 	defer agent.Cleanup()
 	agent.RequireVersion(">1.0.0")
 
@@ -204,12 +216,11 @@ func TestDataVolume2(t *testing.T) {
 		t.Fatalf("Could not register task definition: %v", err)
 	}
 	var testTasks []*TestTask
-	var err error
-	if strings.Contains(td, "awsvpc") {
+	if "" == "true" {
 		for i := 0; i < 1; i++ {
-			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			tmpTask, err := agent.StartAWSVPCTask("datavolume2", nil)
 			if err != nil {
-				t.Fatalf("Could not start task in awsvpc mode: %!v(MISSING)", err)
+				t.Fatalf("Could not start task in awsvpc mode: %v", err)
 			}
 			testTasks = append(testTasks, tmpTask)
 		}
@@ -248,7 +259,11 @@ func TestDevices(t *testing.T) {
 	if os.Getenv("ECS_FUNCTIONAL_PARALLEL") != "" {
 		t.Parallel()
 	}
-	agent := RunAgent(t, nil)
+	var options *AgentOptions
+	if "" == "true" {
+		options = &AgentOptions{EnableTaskENI: true}
+	}
+	agent := RunAgent(t, options)
 	defer agent.Cleanup()
 	agent.RequireVersion(">=1.0.0")
 
@@ -257,12 +272,11 @@ func TestDevices(t *testing.T) {
 		t.Fatalf("Could not register task definition: %v", err)
 	}
 	var testTasks []*TestTask
-	var err error
-	if strings.Contains(td, "awsvpc") {
+	if "" == "true" {
 		for i := 0; i < 1; i++ {
-			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			tmpTask, err := agent.StartAWSVPCTask("devices", nil)
 			if err != nil {
-				t.Fatalf("Could not start task in awsvpc mode: %!v(MISSING)", err)
+				t.Fatalf("Could not start task in awsvpc mode: %v", err)
 			}
 			testTasks = append(testTasks, tmpTask)
 		}
@@ -301,7 +315,11 @@ func TestDisableNetworking(t *testing.T) {
 	if os.Getenv("ECS_FUNCTIONAL_PARALLEL") != "" {
 		t.Parallel()
 	}
-	agent := RunAgent(t, nil)
+	var options *AgentOptions
+	if "" == "true" {
+		options = &AgentOptions{EnableTaskENI: true}
+	}
+	agent := RunAgent(t, options)
 	defer agent.Cleanup()
 	agent.RequireVersion(">=1.5.0")
 
@@ -310,12 +328,11 @@ func TestDisableNetworking(t *testing.T) {
 		t.Fatalf("Could not register task definition: %v", err)
 	}
 	var testTasks []*TestTask
-	var err error
-	if strings.Contains(td, "awsvpc") {
+	if "" == "true" {
 		for i := 0; i < 1; i++ {
-			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			tmpTask, err := agent.StartAWSVPCTask("network-disabled", nil)
 			if err != nil {
-				t.Fatalf("Could not start task in awsvpc mode: %!v(MISSING)", err)
+				t.Fatalf("Could not start task in awsvpc mode: %v", err)
 			}
 			testTasks = append(testTasks, tmpTask)
 		}
@@ -354,7 +371,11 @@ func TestDnsSearchDomains(t *testing.T) {
 	if os.Getenv("ECS_FUNCTIONAL_PARALLEL") != "" {
 		t.Parallel()
 	}
-	agent := RunAgent(t, nil)
+	var options *AgentOptions
+	if "" == "true" {
+		options = &AgentOptions{EnableTaskENI: true}
+	}
+	agent := RunAgent(t, options)
 	defer agent.Cleanup()
 	agent.RequireVersion(">=1.5.0")
 
@@ -363,12 +384,11 @@ func TestDnsSearchDomains(t *testing.T) {
 		t.Fatalf("Could not register task definition: %v", err)
 	}
 	var testTasks []*TestTask
-	var err error
-	if strings.Contains(td, "awsvpc") {
+	if "" == "true" {
 		for i := 0; i < 1; i++ {
-			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			tmpTask, err := agent.StartAWSVPCTask("dns-search-domains", nil)
 			if err != nil {
-				t.Fatalf("Could not start task in awsvpc mode: %!v(MISSING)", err)
+				t.Fatalf("Could not start task in awsvpc mode: %v", err)
 			}
 			testTasks = append(testTasks, tmpTask)
 		}
@@ -407,7 +427,11 @@ func TestDnsServers(t *testing.T) {
 	if os.Getenv("ECS_FUNCTIONAL_PARALLEL") != "" {
 		t.Parallel()
 	}
-	agent := RunAgent(t, nil)
+	var options *AgentOptions
+	if "" == "true" {
+		options = &AgentOptions{EnableTaskENI: true}
+	}
+	agent := RunAgent(t, options)
 	defer agent.Cleanup()
 	agent.RequireVersion(">=1.5.0")
 
@@ -416,12 +440,11 @@ func TestDnsServers(t *testing.T) {
 		t.Fatalf("Could not register task definition: %v", err)
 	}
 	var testTasks []*TestTask
-	var err error
-	if strings.Contains(td, "awsvpc") {
+	if "" == "true" {
 		for i := 0; i < 1; i++ {
-			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			tmpTask, err := agent.StartAWSVPCTask("dns-servers", nil)
 			if err != nil {
-				t.Fatalf("Could not start task in awsvpc mode: %!v(MISSING)", err)
+				t.Fatalf("Could not start task in awsvpc mode: %v", err)
 			}
 			testTasks = append(testTasks, tmpTask)
 		}
@@ -460,7 +483,11 @@ func TestExtraHosts(t *testing.T) {
 	if os.Getenv("ECS_FUNCTIONAL_PARALLEL") != "" {
 		t.Parallel()
 	}
-	agent := RunAgent(t, nil)
+	var options *AgentOptions
+	if "" == "true" {
+		options = &AgentOptions{EnableTaskENI: true}
+	}
+	agent := RunAgent(t, options)
 	defer agent.Cleanup()
 	agent.RequireVersion(">=1.5.0")
 
@@ -469,12 +496,11 @@ func TestExtraHosts(t *testing.T) {
 		t.Fatalf("Could not register task definition: %v", err)
 	}
 	var testTasks []*TestTask
-	var err error
-	if strings.Contains(td, "awsvpc") {
+	if "" == "true" {
 		for i := 0; i < 1; i++ {
-			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			tmpTask, err := agent.StartAWSVPCTask("extra-hosts", nil)
 			if err != nil {
-				t.Fatalf("Could not start task in awsvpc mode: %!v(MISSING)", err)
+				t.Fatalf("Could not start task in awsvpc mode: %v", err)
 			}
 			testTasks = append(testTasks, tmpTask)
 		}
@@ -513,7 +539,11 @@ func TestHostname(t *testing.T) {
 	if os.Getenv("ECS_FUNCTIONAL_PARALLEL") != "" {
 		t.Parallel()
 	}
-	agent := RunAgent(t, nil)
+	var options *AgentOptions
+	if "" == "true" {
+		options = &AgentOptions{EnableTaskENI: true}
+	}
+	agent := RunAgent(t, options)
 	defer agent.Cleanup()
 	agent.RequireVersion(">=1.5.0")
 
@@ -522,12 +552,11 @@ func TestHostname(t *testing.T) {
 		t.Fatalf("Could not register task definition: %v", err)
 	}
 	var testTasks []*TestTask
-	var err error
-	if strings.Contains(td, "awsvpc") {
+	if "" == "true" {
 		for i := 0; i < 1; i++ {
-			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			tmpTask, err := agent.StartAWSVPCTask("hostname", nil)
 			if err != nil {
-				t.Fatalf("Could not start task in awsvpc mode: %!v(MISSING)", err)
+				t.Fatalf("Could not start task in awsvpc mode: %v", err)
 			}
 			testTasks = append(testTasks, tmpTask)
 		}
@@ -566,7 +595,11 @@ func TestInitProcessEnabled(t *testing.T) {
 	if os.Getenv("ECS_FUNCTIONAL_PARALLEL") != "" {
 		t.Parallel()
 	}
-	agent := RunAgent(t, nil)
+	var options *AgentOptions
+	if "" == "true" {
+		options = &AgentOptions{EnableTaskENI: true}
+	}
+	agent := RunAgent(t, options)
 	defer agent.Cleanup()
 	agent.RequireVersion(">=1.15.0")
 
@@ -575,12 +608,11 @@ func TestInitProcessEnabled(t *testing.T) {
 		t.Fatalf("Could not register task definition: %v", err)
 	}
 	var testTasks []*TestTask
-	var err error
-	if strings.Contains(td, "awsvpc") {
+	if "" == "true" {
 		for i := 0; i < 1; i++ {
-			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			tmpTask, err := agent.StartAWSVPCTask("init-process", nil)
 			if err != nil {
-				t.Fatalf("Could not start task in awsvpc mode: %!v(MISSING)", err)
+				t.Fatalf("Could not start task in awsvpc mode: %v", err)
 			}
 			testTasks = append(testTasks, tmpTask)
 		}
@@ -619,7 +651,11 @@ func TestLinkVolumeDependencies(t *testing.T) {
 	if os.Getenv("ECS_FUNCTIONAL_PARALLEL") != "" {
 		t.Parallel()
 	}
-	agent := RunAgent(t, nil)
+	var options *AgentOptions
+	if "" == "true" {
+		options = &AgentOptions{EnableTaskENI: true}
+	}
+	agent := RunAgent(t, options)
 	defer agent.Cleanup()
 	agent.RequireVersion(">=1.0.0")
 
@@ -628,12 +664,11 @@ func TestLinkVolumeDependencies(t *testing.T) {
 		t.Fatalf("Could not register task definition: %v", err)
 	}
 	var testTasks []*TestTask
-	var err error
-	if strings.Contains(td, "awsvpc") {
+	if "" == "true" {
 		for i := 0; i < 1; i++ {
-			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			tmpTask, err := agent.StartAWSVPCTask("network-link-2", nil)
 			if err != nil {
-				t.Fatalf("Could not start task in awsvpc mode: %!v(MISSING)", err)
+				t.Fatalf("Could not start task in awsvpc mode: %v", err)
 			}
 			testTasks = append(testTasks, tmpTask)
 		}
@@ -672,7 +707,11 @@ func TestNetworkLink(t *testing.T) {
 	if os.Getenv("ECS_FUNCTIONAL_PARALLEL") != "" {
 		t.Parallel()
 	}
-	agent := RunAgent(t, nil)
+	var options *AgentOptions
+	if "" == "true" {
+		options = &AgentOptions{EnableTaskENI: true}
+	}
+	agent := RunAgent(t, options)
 	defer agent.Cleanup()
 	agent.RequireVersion(">=1.0.0")
 
@@ -681,12 +720,11 @@ func TestNetworkLink(t *testing.T) {
 		t.Fatalf("Could not register task definition: %v", err)
 	}
 	var testTasks []*TestTask
-	var err error
-	if strings.Contains(td, "awsvpc") {
+	if "" == "true" {
 		for i := 0; i < 1; i++ {
-			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			tmpTask, err := agent.StartAWSVPCTask("network-link", nil)
 			if err != nil {
-				t.Fatalf("Could not start task in awsvpc mode: %!v(MISSING)", err)
+				t.Fatalf("Could not start task in awsvpc mode: %v", err)
 			}
 			testTasks = append(testTasks, tmpTask)
 		}
@@ -728,7 +766,11 @@ func TestParallelPull(t *testing.T) {
 	if os.Getenv("ECS_FUNCTIONAL_PARALLEL") != "" {
 		t.Parallel()
 	}
-	agent := RunAgent(t, nil)
+	var options *AgentOptions
+	if "" == "true" {
+		options = &AgentOptions{EnableTaskENI: true}
+	}
+	agent := RunAgent(t, options)
 	defer agent.Cleanup()
 	agent.RequireVersion(">=1.0.0")
 
@@ -737,12 +779,11 @@ func TestParallelPull(t *testing.T) {
 		t.Fatalf("Could not register task definition: %v", err)
 	}
 	var testTasks []*TestTask
-	var err error
-	if strings.Contains(td, "awsvpc") {
+	if "" == "true" {
 		for i := 0; i < 4; i++ {
-			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			tmpTask, err := agent.StartAWSVPCTask("parallel-pull", nil)
 			if err != nil {
-				t.Fatalf("Could not start task in awsvpc mode: %!v(MISSING)", err)
+				t.Fatalf("Could not start task in awsvpc mode: %v", err)
 			}
 			testTasks = append(testTasks, tmpTask)
 		}
@@ -793,7 +834,11 @@ func TestPrivileged(t *testing.T) {
 	if os.Getenv("ECS_FUNCTIONAL_PARALLEL") != "" {
 		t.Parallel()
 	}
-	agent := RunAgent(t, nil)
+	var options *AgentOptions
+	if "" == "true" {
+		options = &AgentOptions{EnableTaskENI: true}
+	}
+	agent := RunAgent(t, options)
 	defer agent.Cleanup()
 	agent.RequireVersion(">=1.5.0")
 
@@ -802,12 +847,11 @@ func TestPrivileged(t *testing.T) {
 		t.Fatalf("Could not register task definition: %v", err)
 	}
 	var testTasks []*TestTask
-	var err error
-	if strings.Contains(td, "awsvpc") {
+	if "" == "true" {
 		for i := 0; i < 1; i++ {
-			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			tmpTask, err := agent.StartAWSVPCTask("privileged", nil)
 			if err != nil {
-				t.Fatalf("Could not start task in awsvpc mode: %!v(MISSING)", err)
+				t.Fatalf("Could not start task in awsvpc mode: %v", err)
 			}
 			testTasks = append(testTasks, tmpTask)
 		}
@@ -846,7 +890,11 @@ func TestReadonlyRootfs(t *testing.T) {
 	if os.Getenv("ECS_FUNCTIONAL_PARALLEL") != "" {
 		t.Parallel()
 	}
-	agent := RunAgent(t, nil)
+	var options *AgentOptions
+	if "" == "true" {
+		options = &AgentOptions{EnableTaskENI: true}
+	}
+	agent := RunAgent(t, options)
 	defer agent.Cleanup()
 	agent.RequireVersion(">=1.5.0")
 
@@ -855,12 +903,11 @@ func TestReadonlyRootfs(t *testing.T) {
 		t.Fatalf("Could not register task definition: %v", err)
 	}
 	var testTasks []*TestTask
-	var err error
-	if strings.Contains(td, "awsvpc") {
+	if "" == "true" {
 		for i := 0; i < 1; i++ {
-			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			tmpTask, err := agent.StartAWSVPCTask("readonly-rootfs", nil)
 			if err != nil {
-				t.Fatalf("Could not start task in awsvpc mode: %!v(MISSING)", err)
+				t.Fatalf("Could not start task in awsvpc mode: %v", err)
 			}
 			testTasks = append(testTasks, tmpTask)
 		}
@@ -899,7 +946,11 @@ func TestSecurityOptNoNewPrivileges(t *testing.T) {
 	if os.Getenv("ECS_FUNCTIONAL_PARALLEL") != "" {
 		t.Parallel()
 	}
-	agent := RunAgent(t, nil)
+	var options *AgentOptions
+	if "" == "true" {
+		options = &AgentOptions{EnableTaskENI: true}
+	}
+	agent := RunAgent(t, options)
 	defer agent.Cleanup()
 	agent.RequireVersion(">=1.12.1")
 
@@ -908,12 +959,11 @@ func TestSecurityOptNoNewPrivileges(t *testing.T) {
 		t.Fatalf("Could not register task definition: %v", err)
 	}
 	var testTasks []*TestTask
-	var err error
-	if strings.Contains(td, "awsvpc") {
+	if "" == "true" {
 		for i := 0; i < 1; i++ {
-			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			tmpTask, err := agent.StartAWSVPCTask("security-opt-nonewprivileges", nil)
 			if err != nil {
-				t.Fatalf("Could not start task in awsvpc mode: %!v(MISSING)", err)
+				t.Fatalf("Could not start task in awsvpc mode: %v", err)
 			}
 			testTasks = append(testTasks, tmpTask)
 		}
@@ -952,7 +1002,11 @@ func TestShmSize(t *testing.T) {
 	if os.Getenv("ECS_FUNCTIONAL_PARALLEL") != "" {
 		t.Parallel()
 	}
-	agent := RunAgent(t, nil)
+	var options *AgentOptions
+	if "" == "true" {
+		options = &AgentOptions{EnableTaskENI: true}
+	}
+	agent := RunAgent(t, options)
 	defer agent.Cleanup()
 	agent.RequireVersion(">=1.11.0")
 
@@ -961,12 +1015,11 @@ func TestShmSize(t *testing.T) {
 		t.Fatalf("Could not register task definition: %v", err)
 	}
 	var testTasks []*TestTask
-	var err error
-	if strings.Contains(td, "awsvpc") {
+	if "" == "true" {
 		for i := 0; i < 1; i++ {
-			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			tmpTask, err := agent.StartAWSVPCTask("shmsize", nil)
 			if err != nil {
-				t.Fatalf("Could not start task in awsvpc mode: %!v(MISSING)", err)
+				t.Fatalf("Could not start task in awsvpc mode: %v", err)
 			}
 			testTasks = append(testTasks, tmpTask)
 		}
@@ -1005,7 +1058,11 @@ func TestSimpleExit(t *testing.T) {
 	if os.Getenv("ECS_FUNCTIONAL_PARALLEL") != "" {
 		t.Parallel()
 	}
-	agent := RunAgent(t, nil)
+	var options *AgentOptions
+	if "" == "true" {
+		options = &AgentOptions{EnableTaskENI: true}
+	}
+	agent := RunAgent(t, options)
 	defer agent.Cleanup()
 	agent.RequireVersion(">=1.0.0")
 
@@ -1014,12 +1071,11 @@ func TestSimpleExit(t *testing.T) {
 		t.Fatalf("Could not register task definition: %v", err)
 	}
 	var testTasks []*TestTask
-	var err error
-	if strings.Contains(td, "awsvpc") {
+	if "" == "true" {
 		for i := 0; i < 1; i++ {
-			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			tmpTask, err := agent.StartAWSVPCTask("simple-exit", nil)
 			if err != nil {
-				t.Fatalf("Could not start task in awsvpc mode: %!v(MISSING)", err)
+				t.Fatalf("Could not start task in awsvpc mode: %v", err)
 			}
 			testTasks = append(testTasks, tmpTask)
 		}
@@ -1058,7 +1114,11 @@ func TestTaskLocalVolume(t *testing.T) {
 	if os.Getenv("ECS_FUNCTIONAL_PARALLEL") != "" {
 		t.Parallel()
 	}
-	agent := RunAgent(t, nil)
+	var options *AgentOptions
+	if "" == "true" {
+		options = &AgentOptions{EnableTaskENI: true}
+	}
+	agent := RunAgent(t, options)
 	defer agent.Cleanup()
 	agent.RequireVersion(">=1.20.0")
 
@@ -1067,12 +1127,11 @@ func TestTaskLocalVolume(t *testing.T) {
 		t.Fatalf("Could not register task definition: %v", err)
 	}
 	var testTasks []*TestTask
-	var err error
-	if strings.Contains(td, "awsvpc") {
+	if "" == "true" {
 		for i := 0; i < 1; i++ {
-			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			tmpTask, err := agent.StartAWSVPCTask("task-local-vol", nil)
 			if err != nil {
-				t.Fatalf("Could not start task in awsvpc mode: %!v(MISSING)", err)
+				t.Fatalf("Could not start task in awsvpc mode: %v", err)
 			}
 			testTasks = append(testTasks, tmpTask)
 		}
@@ -1111,7 +1170,11 @@ func TestTmpfs(t *testing.T) {
 	if os.Getenv("ECS_FUNCTIONAL_PARALLEL") != "" {
 		t.Parallel()
 	}
-	agent := RunAgent(t, nil)
+	var options *AgentOptions
+	if "" == "true" {
+		options = &AgentOptions{EnableTaskENI: true}
+	}
+	agent := RunAgent(t, options)
 	defer agent.Cleanup()
 	agent.RequireVersion(">=1.11.0")
 
@@ -1120,12 +1183,11 @@ func TestTmpfs(t *testing.T) {
 		t.Fatalf("Could not register task definition: %v", err)
 	}
 	var testTasks []*TestTask
-	var err error
-	if strings.Contains(td, "awsvpc") {
+	if "" == "true" {
 		for i := 0; i < 1; i++ {
-			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			tmpTask, err := agent.StartAWSVPCTask("tmpfs", nil)
 			if err != nil {
-				t.Fatalf("Could not start task in awsvpc mode: %!v(MISSING)", err)
+				t.Fatalf("Could not start task in awsvpc mode: %v", err)
 			}
 			testTasks = append(testTasks, tmpTask)
 		}
@@ -1164,7 +1226,11 @@ func TestNofilesULimit(t *testing.T) {
 	if os.Getenv("ECS_FUNCTIONAL_PARALLEL") != "" {
 		t.Parallel()
 	}
-	agent := RunAgent(t, nil)
+	var options *AgentOptions
+	if "" == "true" {
+		options = &AgentOptions{EnableTaskENI: true}
+	}
+	agent := RunAgent(t, options)
 	defer agent.Cleanup()
 	agent.RequireVersion(">=1.5.0")
 
@@ -1173,12 +1239,11 @@ func TestNofilesULimit(t *testing.T) {
 		t.Fatalf("Could not register task definition: %v", err)
 	}
 	var testTasks []*TestTask
-	var err error
-	if strings.Contains(td, "awsvpc") {
+	if "" == "true" {
 		for i := 0; i < 1; i++ {
-			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			tmpTask, err := agent.StartAWSVPCTask("nofiles-ulimit", nil)
 			if err != nil {
-				t.Fatalf("Could not start task in awsvpc mode: %!v(MISSING)", err)
+				t.Fatalf("Could not start task in awsvpc mode: %v", err)
 			}
 			testTasks = append(testTasks, tmpTask)
 		}
@@ -1217,7 +1282,11 @@ func TestUserNobody(t *testing.T) {
 	if os.Getenv("ECS_FUNCTIONAL_PARALLEL") != "" {
 		t.Parallel()
 	}
-	agent := RunAgent(t, nil)
+	var options *AgentOptions
+	if "" == "true" {
+		options = &AgentOptions{EnableTaskENI: true}
+	}
+	agent := RunAgent(t, options)
 	defer agent.Cleanup()
 	agent.RequireVersion(">=1.5.0")
 
@@ -1226,12 +1295,11 @@ func TestUserNobody(t *testing.T) {
 		t.Fatalf("Could not register task definition: %v", err)
 	}
 	var testTasks []*TestTask
-	var err error
-	if strings.Contains(td, "awsvpc") {
+	if "" == "true" {
 		for i := 0; i < 1; i++ {
-			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			tmpTask, err := agent.StartAWSVPCTask("user-nobody", nil)
 			if err != nil {
-				t.Fatalf("Could not start task in awsvpc mode: %!v(MISSING)", err)
+				t.Fatalf("Could not start task in awsvpc mode: %v", err)
 			}
 			testTasks = append(testTasks, tmpTask)
 		}
@@ -1270,7 +1338,11 @@ func TestWorkingDir(t *testing.T) {
 	if os.Getenv("ECS_FUNCTIONAL_PARALLEL") != "" {
 		t.Parallel()
 	}
-	agent := RunAgent(t, nil)
+	var options *AgentOptions
+	if "" == "true" {
+		options = &AgentOptions{EnableTaskENI: true}
+	}
+	agent := RunAgent(t, options)
 	defer agent.Cleanup()
 	agent.RequireVersion(">=1.5.0")
 
@@ -1279,12 +1351,11 @@ func TestWorkingDir(t *testing.T) {
 		t.Fatalf("Could not register task definition: %v", err)
 	}
 	var testTasks []*TestTask
-	var err error
-	if strings.Contains(td, "awsvpc") {
+	if "" == "true" {
 		for i := 0; i < 1; i++ {
-			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			tmpTask, err := agent.StartAWSVPCTask("working-dir", nil)
 			if err != nil {
-				t.Fatalf("Could not start task in awsvpc mode: %!v(MISSING)", err)
+				t.Fatalf("Could not start task in awsvpc mode: %v", err)
 			}
 			testTasks = append(testTasks, tmpTask)
 		}

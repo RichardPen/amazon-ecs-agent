@@ -24,7 +24,6 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"text/template"
 
 	"golang.org/x/tools/imports"
@@ -53,6 +52,7 @@ var simpleTestPattern = `
 package simpletest
 
 import (
+	"strings"
 	"testing"
 	"time"
 	"os"
@@ -71,7 +71,11 @@ func Test{{ $el.Name }}(t *testing.T) {
 	// Parallel is opt in because resource constraints could cause test failures
 	// on smaller instances
 	if os.Getenv("ECS_FUNCTIONAL_PARALLEL") != "" { t.Parallel() }
-	agent := RunAgent(t, nil)
+	var options *AgentOptions
+	if "{{ $el.AwsvpcMode }}" == "true" {
+			options = &AgentOptions{EnableTaskENI: true}
+	}
+	agent := RunAgent(t, options)
 	defer agent.Cleanup()
 	agent.RequireVersion("{{ $el.Version }}")
 
@@ -80,12 +84,11 @@ func Test{{ $el.Name }}(t *testing.T) {
 		t.Fatalf("Could not register task definition: %%v", err)
 	}
 	var testTasks []*TestTask
-	var err error
-	if strings.Contains(td, "awsvpc") {
+	if "{{ $el.AwsvpcMode }}" == "true"{
 		for i := 0; i < {{ $el.Count }}; i ++{
-			tmpTask, err := agent.StartAWSVPCTask(td, nil)
+			tmpTask, err := agent.StartAWSVPCTask( "{{ $el.TaskDefinition }}", nil)
 			if err != nil{
-				t.Fatalf("Could not start task in awsvpc mode: %v",err)
+				t.Fatalf("Could not start task in awsvpc mode: %%v",err)
 			}
 			testTasks = append(testTasks, tmpTask)
 		}
@@ -149,6 +152,7 @@ func main() {
 		Count          int
 		DockerVersion  string
 		Daemon         bool
+		AwsvpcMode     string
 	}
 
 	types := []struct {

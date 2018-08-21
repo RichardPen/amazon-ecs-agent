@@ -177,8 +177,8 @@ test-registry: netkitten volumes-test squid awscli image-cleanup-test-images flu
 
 test-in-docker:
 
-run-functional-tests: testnnp test-registry ecr-execution-role-image telemetry-test-image
-	. ./scripts/shared_env && go test -tags functional -timeout=30m -v ./agent/functional_tests/tests/generated/...
+run-functional-tests: 
+	. ./scripts/shared_env && go test -tags functional -timeout=30m -v ./agent/functional_tests/tests/generated/... -run TestHostNameAwsvpc
 
 PAUSE_CONTAINER_IMAGE = "amazon/amazon-ecs-pause"
 PAUSE_CONTAINER_TAG = "0.1.0"
