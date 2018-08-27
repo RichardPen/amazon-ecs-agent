@@ -840,6 +840,8 @@ func TestSerialImagePull(t *testing.T) {
 	testTask := createTestTask("testSerialImagePull")
 	testTask.Containers = append(testTask.Containers,
 		createTestContainerWithImageAndName(testBusyboxImage, "busybox"))
+	testTask.Containers[0].Command = []string{"-loop=ture"}
+	testTask.Containers[1].Command = []string{"sh", "-c", "sleep 1s"}
 
 	go taskEngine.AddTask(testTask)
 
